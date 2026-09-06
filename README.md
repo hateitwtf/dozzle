@@ -1,3 +1,9 @@
+Just icon enriched fork of Dozzle.
+
+https://github.com/selfhst/icons Used as icon source.
+
+
+
 <p align="center">
   <img src="assets/logo.svg" alt="Dozzle Logo" width="200"/>
 </p>
