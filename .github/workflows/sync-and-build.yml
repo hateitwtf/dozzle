@@ -77,10 +77,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set lowercase repository name
+      - name: Extract metadata (tags, labels)
         if: steps.check_run.outputs.run_build == 'true'
-        run: |
-          echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/dozzle:latest" | tr '[:upper:]' '[:lower:]' >> "$GITHUB_ENV"
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest
 
       - name: Set up Docker Buildx
         if: steps.check_run.outputs.run_build == 'true'
@@ -93,7 +97,8 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ env.IMAGE_NAME }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
