@@ -78,7 +78,19 @@ jobs:
           shopt -u nullglob
 
           echo "Icons total: $(ls -1 assets/icons/apps/*.svg | wc -l)"
+      - name: Save icons list as artifact
+        if: steps.check_run.outputs.run_build == 'true'
+        run: |
+          ls -1 assets/icons/apps/*.svg | sed 's|assets/icons/apps/||' | sort > icons-list.txt
 
+      - name: Upload icons list
+        if: steps.check_run.outputs.run_build == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundled-icons-list
+          path: icons-list.txt
+          retention-days: 7
+          
       - name: Generate valid self-signed shared cert and key
         if: steps.check_run.outputs.run_build == 'true'
         run: |
