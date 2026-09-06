@@ -1,8 +1,12 @@
 Just icon enriched fork of Dozzle.
-
+Follows original Dozzle releases building docker image with additional svg icons.
 Only fullcolored icons.
 
 https://github.com/selfhst/icons and https://github.com/homarr-labs/dashboard-icons Used as icon source.
+
+ 
+    $ docker run --name dozzle -d --volume=/var/run/docker.sock:/var/run/docker.sock -v dozzle_data:/data -p 8080:8080 ghcr.io/hateitwtf/dozzle-iconful:latest
+
 
 
 
