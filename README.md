@@ -1,6 +1,8 @@
 Just icon enriched fork of Dozzle.
 
-https://github.com/selfhst/icons Used as icon source.
+Only fullcolored icons.
+
+https://github.com/selfhst/icons and https://github.com/homarr-labs/dashboard-icons Used as icon source.
 
 
 
