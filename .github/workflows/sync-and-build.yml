@@ -66,7 +66,15 @@ jobs:
           git sparse-checkout set svg
           cd -
           mkdir -p assets/icons/apps
-          cp -n /tmp/icons/svg/*.svg assets/icons/apps/
+
+          # Копируем и сразу переименовываем файлы вида name-svg.svg -> name.svg
+          for file in /tmp/icons/svg/*.svg; do
+            filename=$(basename "$file")
+            clean_name="${filename/-svg.svg/.svg}"
+            # Копируем без перезаписи оригинальных иконок Dozzle
+            cp -n "$file" "assets/icons/apps/$clean_name"
+          done
+
           echo "Icons total: $(ls -1 assets/icons/apps/*.svg | wc -l)"
 
       - name: Generate valid self-signed shared cert and key
