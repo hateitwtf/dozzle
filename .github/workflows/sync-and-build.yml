@@ -57,27 +57,64 @@ jobs:
             echo "run_build=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Download extra icons from selfhst/icons
+      - name: Download extra icons from homarr-labs and selfhst
         if: steps.check_run.outputs.run_build == 'true'
         run: |
-          echo "Fetching selfhst icons..."
-          git clone --depth 1 --branch main --filter=blob:none --sparse https://github.com/selfhst/icons.git /tmp/icons
-          cd /tmp/icons
-          git sparse-checkout set svg
-          cd -
           mkdir -p assets/icons/apps
 
-          shopt -s nullglob
-          for file in /tmp/icons/svg/*.svg; do
-            [ -f "$file" ] || continue
-            filename=$(basename "$file")
-            clean_name="${filename/-svg.svg/.svg}"
-            clean_name=$(echo "$clean_name" | tr '[:upper:]' '[:lower:]')
-            cp -f "$file" "assets/icons/apps/$clean_name"
-          done
-          shopt -u nullglob
+          # 1. Скачиваем homarr-labs/dashboard-icons
+          echo "Fetching homarr-labs/dashboard-icons..."
+          git clone --depth 1 --branch main --filter=blob:none --sparse https://github.com/homarr-labs/dashboard-icons.git /tmp/homarr
+          cd /tmp/homarr
+          git sparse-checkout set svg
+          cd -
+
+          # 2. Скачиваем selfhst/icons
+          echo "Fetching selfhst/icons..."
+          git clone --depth 1 --branch main --filter=blob:none --sparse https://github.com/selfhst/icons.git /tmp/selfhst
+          cd /tmp/selfhst
+          git sparse-checkout set svg
+          cd -
+
+          # Функция безопасного копирования с фильтрацией light/dark
+          process_icons() {
+            local src_dir="$1"
+            shopt -s nullglob
+            for file in "$src_dir"/*.svg; do
+              [ -f "$file" ] || continue
+              filename=$(basename "$file")
+              lower_name=$(echo "$filename" | tr '[:upper:]' '[:lower:]')
+
+              # Игнорируем и пропускаем любые темы -light и -dark
+              if [[ "$lower_name" == *"-light.svg"* ]] || [[ "$lower_name" == *"-dark.svg"* ]]; then
+                continue
+              fi
+
+              # Копируем оригинальное имя
+              cp -f "$file" "assets/icons/apps/$lower_name"
+
+              # Если есть суффикс -svg.svg, создаем копию с чистым именем (dockhand-svg.svg -> dockhand.svg)
+              if [[ "$lower_name" == *"-svg.svg"* ]]; then
+                clean_name="${lower_name/-svg.svg/.svg}"
+                cp -f "$file" "assets/icons/apps/$clean_name"
+              fi
+            done
+            shopt -u nullglob
+          }
+
+          echo "Processing homarr icons..."
+          process_icons "/tmp/homarr/svg"
+
+          echo "Processing selfhst icons..."
+          process_icons "/tmp/selfhst/svg"
 
           echo "Icons total: $(ls -1 assets/icons/apps/*.svg | wc -l)"
+
+          # Сворачиваемый лог итогового списка иконок
+          echo "::group::Final list of bundled icons"
+          ls -1 assets/icons/apps/*.svg | sed 's|assets/icons/apps/||'
+          echo "::endgroup::"
+          
       - name: Save icons list as artifact
         if: steps.check_run.outputs.run_build == 'true'
         run: |
