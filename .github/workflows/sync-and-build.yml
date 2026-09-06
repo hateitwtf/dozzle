@@ -32,15 +32,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git remote add upstream https://github.com/amir20/dozzle.git
+          git remote add upstream https://github.com/amir20/dozzle.git || true
           git fetch upstream master
 
           BEHIND_COUNT=$(git rev-list HEAD..upstream/master --count)
           echo "Behind upstream by $BEHIND_COUNT commits"
 
           if [ "$BEHIND_COUNT" -gt 0 ]; then
-            echo "Fast-forwarding to upstream..."
-            git merge --ff-only upstream/master
+            echo "Merging upstream changes..."
+            git merge upstream/master --no-edit -m "chore: sync upstream master"
             git push origin master
             echo "has_updates=true" >> "$GITHUB_OUTPUT"
           else
