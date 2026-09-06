@@ -69,13 +69,11 @@ jobs:
           cp -n /tmp/icons/svg/*.svg assets/icons/apps/
           echo "Icons total: $(ls -1 assets/icons/apps/*.svg | wc -l)"
 
-      - name: Ensure shared_key.pem exists
+      - name: Ensure shared cert and key exist
         if: steps.check_run.outputs.run_build == 'true'
         run: |
-          # Создаем фиктивный ключ/сертификат для прохождения шага COPY в Dockerfile
-          if [ ! -f "shared_key.pem" ]; then
-            touch shared_key.pem
-          fi
+          touch shared_key.pem
+          touch shared_cert.pem
 
       - name: Log in to GitHub Container Registry
         if: steps.check_run.outputs.run_build == 'true'
