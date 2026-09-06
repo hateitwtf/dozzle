@@ -57,11 +57,11 @@ jobs:
             echo "run_build=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Download extra icons from homarr-labs/dashboard-icons
+      - name: Download extra icons from selfhst/icons
         if: steps.check_run.outputs.run_build == 'true'
         run: |
-          echo "Fetching dashboard-icons..."
-          git clone --depth 1 --branch main --filter=blob:none --sparse https://github.com/homarr-labs/dashboard-icons.git /tmp/icons
+          echo "Fetching selfhst icons..."
+          git clone --depth 1 --branch main --filter=blob:none --sparse https://github.com/selfhst/icons.git /tmp/icons
           cd /tmp/icons
           git sparse-checkout set svg
           cd -
@@ -91,7 +91,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ghcr.io/${{ github.repository_owner }}/dozzle-iconful
           tags: |
             type=raw,value=latest
 
