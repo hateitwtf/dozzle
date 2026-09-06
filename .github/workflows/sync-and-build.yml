@@ -57,11 +57,11 @@ jobs:
             echo "run_build=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Download extra icons from walkxcode/dashboard-icons
+      - name: Download extra icons from homarr-labs/dashboard-icons
         if: steps.check_run.outputs.run_build == 'true'
         run: |
           echo "Fetching dashboard-icons..."
-          git clone --depth 1 --filter=blob:none --sparse https://github.com/walkxcode/dashboard-icons.git /tmp/icons
+          git clone --depth 1 --branch main --filter=blob:none --sparse https://github.com/homarr-labs/dashboard-icons.git /tmp/icons
           cd /tmp/icons
           git sparse-checkout set svg
           cd -
