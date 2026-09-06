@@ -67,13 +67,15 @@ jobs:
           cd -
           mkdir -p assets/icons/apps
 
-          # Копируем и сразу переименовываем файлы вида name-svg.svg -> name.svg
+          shopt -s nullglob
           for file in /tmp/icons/svg/*.svg; do
+            [ -f "$file" ] || continue
             filename=$(basename "$file")
             clean_name="${filename/-svg.svg/.svg}"
-            # Копируем без перезаписи оригинальных иконок Dozzle
-            cp -n "$file" "assets/icons/apps/$clean_name"
+            clean_name=$(echo "$clean_name" | tr '[:upper:]' '[:lower:]')
+            cp -f "$file" "assets/icons/apps/$clean_name"
           done
+          shopt -u nullglob
 
           echo "Icons total: $(ls -1 assets/icons/apps/*.svg | wc -l)"
 
