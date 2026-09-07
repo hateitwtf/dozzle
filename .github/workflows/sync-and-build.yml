@@ -9,7 +9,7 @@ on:
         description: 'Собрать образ даже если нет обновлений'
         required: false
         type: boolean
-        default: true
+        default: false
 
 permissions:
   contents: write
@@ -26,32 +26,41 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sync upstream master
+      - name: Check latest upstream release and sync
         id: sync
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Получаем последний официальный релиз из amir20/dozzle
+          LATEST_TAG=$(gh api repos/amir20/dozzle/releases/latest --jq .tag_name)
+          echo "Latest upstream release tag: $LATEST_TAG"
+          echo "release_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
 
-          git remote add upstream https://github.com/amir20/dozzle.git || true
-          git fetch upstream master
-
-          BEHIND_COUNT=$(git rev-list HEAD..upstream/master --count)
-          echo "Behind upstream by $BEHIND_COUNT commits"
-
-          if [ "$BEHIND_COUNT" -gt 0 ]; then
-            echo "Merging upstream changes..."
-            git merge upstream/master --no-edit -m "chore: sync upstream master"
-            git push origin master
-            echo "has_updates=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Up to date."
+          # Проверяем, существует ли уже такой тег у нас в репозитории
+          git fetch origin --tags
+          if git rev-parse "$LATEST_TAG" >/dev/null 2>&1; then
+            echo "Release $LATEST_TAG is already synced."
             echo "has_updates=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "New release found: $LATEST_TAG. Merging..."
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+
+            git remote add upstream https://github.com/amir20/dozzle.git || true
+            git fetch upstream tag "$LATEST_TAG" --no-tags
+
+            git merge "$LATEST_TAG" --no-edit -m "chore: sync release $LATEST_TAG"
+            git tag "$LATEST_TAG"
+            git push origin master
+            git push origin "$LATEST_TAG"
+
+            echo "has_updates=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Determine if build is needed
         id: check_run
         run: |
-          if [ "${{ steps.sync.outputs.has_updates }}" = "true" ] || [ "${{ github.event.inputs.force_build }}" = "true" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ "${{ steps.sync.outputs.has_updates }}" = "true" ] || [ "${{ github.event.inputs.force_build }}" = "true" ]; then
             echo "run_build=true" >> "$GITHUB_OUTPUT"
           else
             echo "run_build=false" >> "$GITHUB_OUTPUT"
@@ -114,7 +123,7 @@ jobs:
           echo "::group::Final list of bundled icons"
           ls -1 assets/icons/apps/*.svg | sed 's|assets/icons/apps/||'
           echo "::endgroup::"
-          
+
       - name: Save icons list as artifact
         if: steps.check_run.outputs.run_build == 'true'
         run: |
@@ -127,7 +136,7 @@ jobs:
           name: bundled-icons-list
           path: icons-list.txt
           retention-days: 7
-          
+
       - name: Generate valid self-signed shared cert and key
         if: steps.check_run.outputs.run_build == 'true'
         run: |
@@ -153,6 +162,7 @@ jobs:
           images: ghcr.io/${{ github.repository_owner }}/dozzle-iconful
           tags: |
             type=raw,value=latest
+            type=raw,value=${{ steps.sync.outputs.release_tag }}
 
       - name: Set up Docker Buildx
         if: steps.check_run.outputs.run_build == 'true'
