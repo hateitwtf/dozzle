@@ -31,14 +31,16 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Получаем последний официальный релиз из amir20/dozzle
+          # 1. Получаем последний официальный релиз из amir20/dozzle
           LATEST_TAG=$(gh api repos/amir20/dozzle/releases/latest --jq .tag_name)
           echo "Latest upstream release tag: $LATEST_TAG"
           echo "release_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
 
-          # Проверяем, существует ли уже такой тег у нас в репозитории
-          git fetch origin --tags
-          if git rev-parse "$LATEST_TAG" >/dev/null 2>&1; then
+          # 2. Подтягиваем актуальные теги из origin
+          git fetch origin --tags --force
+
+          # 3. Проверяем, существует ли уже такой тег в origin
+          if git rev-parse "refs/tags/$LATEST_TAG" >/dev/null 2>&1; then
             echo "Release $LATEST_TAG is already synced."
             echo "has_updates=false" >> "$GITHUB_OUTPUT"
           else
@@ -50,9 +52,11 @@ jobs:
             git fetch upstream tag "$LATEST_TAG" --no-tags
 
             git merge "$LATEST_TAG" --no-edit -m "chore: sync release $LATEST_TAG"
-            git tag "$LATEST_TAG"
+
+            # Ставим/обновляем тег принудительно (-f) и пушим
+            git tag -f "$LATEST_TAG"
             git push origin master
-            git push origin "$LATEST_TAG"
+            git push origin "$LATEST_TAG" --force
 
             echo "has_updates=true" >> "$GITHUB_OUTPUT"
           fi
