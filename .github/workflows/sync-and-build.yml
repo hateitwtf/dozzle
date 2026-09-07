@@ -31,15 +31,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 1. Получаем последний официальный релиз из amir20/dozzle
           LATEST_TAG=$(gh api repos/amir20/dozzle/releases/latest --jq .tag_name)
           echo "Latest upstream release tag: $LATEST_TAG"
           echo "release_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
 
-          # 2. Подтягиваем актуальные теги из origin
           git fetch origin --tags --force
 
-          # 3. Проверяем, существует ли уже такой тег в origin
           if git rev-parse "refs/tags/$LATEST_TAG" >/dev/null 2>&1; then
             echo "Release $LATEST_TAG is already synced."
             echo "has_updates=false" >> "$GITHUB_OUTPUT"
@@ -51,9 +48,17 @@ jobs:
             git remote add upstream https://github.com/amir20/dozzle.git || true
             git fetch upstream tag "$LATEST_TAG" --no-tags
 
-            git merge "$LATEST_TAG" --no-edit -m "chore: sync release $LATEST_TAG"
+            # 1. Запускаем слияние без создания коммита
+            git merge "$LATEST_TAG" --no-commit --no-ff || true
 
-            # Ставим/обновляем тег принудительно (-f) и пушим
+            # 2. Возвращаем папку с воркфлоу в состояние вашей текущей ветки master
+            git checkout HEAD -- .github/workflows/
+            
+            # Удаляем любые новые файлы воркфлоу из апстрима, если они добавились
+            git clean -fd .github/workflows/
+
+            # 3. Фиксируем чистый коммит и пушим
+            git commit -m "chore: sync release $LATEST_TAG (excluding upstream workflows)"
             git tag -f "$LATEST_TAG"
             git push origin master
             git push origin "$LATEST_TAG" --force
