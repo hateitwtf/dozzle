@@ -1,0 +1,251 @@
+<template>
+  <div class="border-base-content/15 bg-base-200/40 divide-base-content/10 divide-y rounded-lg border">
+    <!-- Not linked -->
+    <template v-if="!cloudConfig">
+      <div class="flex items-start gap-4 p-4">
+        <mdi:cloud class="text-base-content/40 mt-0.5 text-4xl" />
+        <div class="flex flex-col gap-1">
+          <p class="text-base-content/70 text-sm">{{ $t("cloud.description") }}</p>
+          <div class="mt-3 flex gap-2">
+            <a :href="`${cloudUrl}`" target="_blank" rel="noreferrer noopener" class="btn btn-sm">
+              {{ $t("cloud.learn-more") }}
+            </a>
+            <a :href="cloudLinkUrl" class="btn btn-primary btn-sm">
+              <mdi:link-variant class="text-base" />
+              {{ $t("cloud.link-instance") }}
+            </a>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Linked -->
+    <template v-else-if="cloudConfig.linked">
+      <!--
+        Error state. Laid out like the unlinked branch above (icon, copy, actions)
+        instead of a full-width alert bar: the settings pane runs the width of the
+        page, and a saturated block stretched across all of it shouted far louder
+        than a dropped connection deserves. Severity rides on the icon alone, which
+        leaves the message at full contrast rather than washed onto red.
+      -->
+      <div v-if="cloudStatusError" class="flex items-start gap-4 p-4">
+        <div
+          class="shrink-0 rounded-full p-2"
+          :class="cloudStatusError === 'auth' ? 'bg-error/10 text-error' : 'bg-warning/10 text-warning'"
+        >
+          <mdi:alert-circle-outline v-if="cloudStatusError === 'auth'" class="size-6" />
+          <mdi:cloud-off-outline v-else class="size-6" />
+        </div>
+        <div class="flex min-w-0 flex-col gap-1">
+          <p class="text-sm">
+            {{ cloudStatusError === "auth" ? $t("cloud.error") : $t("cloud.error-unavailable") }}
+          </p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <a v-if="cloudStatusError === 'auth'" :href="cloudLinkUrl" class="btn btn-primary btn-sm">
+              <mdi:link-variant class="text-base" />
+              {{ $t("cloud.relink-instance") }}
+            </a>
+            <button v-else class="btn btn-sm" @click="fetchCloudStatus">
+              <mdi:refresh class="text-base" />
+              {{ $t("button.retry") }}
+            </button>
+            <!-- Unlink is destructive but secondary here: a second solid button
+                 competed with the one action that actually fixes the problem. -->
+            <button class="btn btn-sm text-error" @click="confirmUnlink">
+              <mdi:link-variant-off class="text-base" />
+              {{ $t("cloud.unlink") }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div v-else-if="isLoadingCloudStatus" class="flex items-center gap-2 p-4">
+        <span class="loading loading-spinner loading-sm"></span>
+      </div>
+
+      <!-- Healthy -->
+      <template v-else-if="cloudStatus">
+        <!--
+          Identity and the two account actions share one row. The actions used to sit
+          in a row of their own at the bottom of the card, which cost a full band of
+          padding for two small buttons.
+        -->
+        <div class="flex flex-wrap items-center gap-2 p-4">
+          <span class="status-pill status-pill-success">
+            <span class="size-1.5 rounded-full bg-current"></span>
+            {{ $t("cloud.connected") }}
+          </span>
+          <span class="status-pill status-pill-primary">{{ cloudStatus.plan.name }}</span>
+          <span class="text-base-content/50 truncate text-sm">{{ cloudStatus.user.email }}</span>
+          <div class="ml-auto flex gap-2">
+            <a :href="cloudUrl" target="_blank" rel="noreferrer noopener" class="btn btn-sm">
+              {{ $t("cloud.dashboard") }}
+            </a>
+            <button class="btn btn-sm text-error" @click="confirmUnlink">
+              {{ $t("cloud.unlink") }}
+            </button>
+          </div>
+        </div>
+
+        <div class="p-4">
+          <CloudUsage :usage="cloudStatus.usage" row />
+        </div>
+
+        <!--
+          One toggle gates BOTH log lines and container metrics — they ride the
+          same connection, and opting out of shipping log contents implies
+          opting out of shipping resource usage. The copy still has to spell out
+          everything that leaves the instance, but it is a disclosure rather than
+          a permanent panel: it answers a question asked once, at link time, and
+          then sits in the way on every later visit to this page.
+        -->
+        <div class="p-4">
+          <label class="flex cursor-pointer items-center justify-between gap-4">
+            <div class="flex flex-col gap-0.5">
+              <span class="text-sm font-medium">{{ $t("cloud.privacy.toggle") }}</span>
+              <span class="text-base-content/60 text-xs">{{ $t("cloud.privacy.required-for") }}</span>
+            </div>
+            <input
+              type="checkbox"
+              class="toggle toggle-primary toggle-sm shrink-0"
+              :checked="streamLogs"
+              :disabled="isSavingStreamLogs"
+              @change="onStreamLogsChange(($event.target as HTMLInputElement).checked)"
+            />
+          </label>
+
+          <p v-if="!streamLogs" class="text-base-content/60 mt-2 text-xs">{{ $t("cloud.privacy.off-note") }}</p>
+
+          <details v-else class="group mt-2">
+            <summary
+              class="text-base-content/60 hover:text-base-content inline-flex cursor-pointer list-none items-center gap-1 text-xs transition-colors [&::-webkit-details-marker]:hidden"
+            >
+              <mdi:chevron-right class="size-3.5 transition-transform group-open:rotate-90" />
+              {{ $t("cloud.privacy.details-link") }}
+            </summary>
+
+            <div class="border-base-content/10 mt-2 space-y-3 rounded-md border p-3 text-xs">
+              <div>
+                <p class="text-base-content/70 font-medium">{{ $t("cloud.privacy.sends-heading") }}</p>
+                <ul class="text-base-content/60 mt-1.5 space-y-1">
+                  <li class="flex items-start gap-1.5">
+                    <mdi:text-box-outline class="mt-0.5 shrink-0 text-sm" />
+                    <span>{{ $t("cloud.privacy.sends-logs") }}</span>
+                  </li>
+                  <li class="flex items-start gap-1.5">
+                    <mdi:chart-line class="mt-0.5 shrink-0 text-sm" />
+                    <span>{{ $t("cloud.privacy.sends-metrics") }}</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="text-base-content/60 flex items-start gap-1.5">
+                <mdi:shield-check-outline class="text-success mt-0.5 shrink-0 text-sm" />
+                <span>
+                  <span class="text-base-content/70 font-medium">{{ $t("cloud.privacy.never-heading") }}</span>
+                  {{ $t("cloud.privacy.never-env") }}
+                </span>
+              </div>
+
+              <p class="text-base-content/45 border-base-content/10 border-t pt-2">
+                {{ $t("cloud.privacy.per-container") }}
+              </p>
+            </div>
+          </details>
+        </div>
+      </template>
+    </template>
+
+    <!-- Unlink confirmation modal -->
+    <dialog ref="unlinkModal" class="modal">
+      <div class="modal-box">
+        <h3 class="text-lg font-bold">{{ $t("cloud.unlink") }}</h3>
+        <p class="py-4 text-sm">{{ $t("cloud.unlink-confirm") }}</p>
+        <div class="modal-action">
+          <form method="dialog">
+            <button class="btn btn-sm">{{ $t("button.cancel") }}</button>
+          </form>
+          <button class="btn btn-error btn-sm" :disabled="isUnlinking" @click="doUnlink">
+            <span v-if="isUnlinking" class="loading loading-spinner loading-xs"></span>
+            {{ $t("cloud.unlink") }}
+          </button>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop">
+        <button></button>
+      </form>
+    </dialog>
+  </div>
+</template>
+
+<script lang="ts" setup>
+const cloudUrl = config.cloudUrl;
+const callbackUrl = `${window.location.origin}${withBase("/")}`;
+const cloudLinkUrl = `${cloudUrl}/link?appUrl=${encodeURIComponent(callbackUrl)}&from=cloud`;
+
+const {
+  cloudConfig,
+  cloudStatus,
+  cloudStatusError,
+  isLoadingCloudStatus,
+  initialLoad,
+  fetchCloudStatus,
+  clearCloudState,
+} = useCloudConfig();
+const isUnlinking = ref(false);
+const unlinkModal = ref<HTMLDialogElement | null>(null);
+
+const streamLogs = ref(true);
+const isSavingStreamLogs = ref(false);
+watchEffect(() => {
+  if (cloudConfig.value) streamLogs.value = cloudConfig.value.streamLogs;
+});
+
+async function onStreamLogsChange(value: boolean | undefined) {
+  if (!cloudConfig.value || value === undefined) return;
+  isSavingStreamLogs.value = true;
+  try {
+    const res = await fetch(withBase("/api/cloud/config"), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ streamLogs: value }),
+    });
+    if (!res.ok) {
+      streamLogs.value = !value;
+      return;
+    }
+    cloudConfig.value.streamLogs = value;
+  } catch {
+    streamLogs.value = !value;
+  } finally {
+    isSavingStreamLogs.value = false;
+  }
+}
+
+function confirmUnlink() {
+  unlinkModal.value?.showModal();
+}
+
+async function doUnlink() {
+  isUnlinking.value = true;
+  try {
+    const res = await fetch(withBase("/api/cloud/config"), { method: "DELETE" });
+    if (!res.ok) {
+      cloudStatusError.value = "unavailable";
+      return;
+    }
+    clearCloudState();
+    unlinkModal.value?.close();
+  } finally {
+    isUnlinking.value = false;
+  }
+}
+
+onMounted(async () => {
+  await initialLoad;
+  if (cloudConfig.value?.linked) {
+    fetchCloudStatus();
+  }
+});
+</script>

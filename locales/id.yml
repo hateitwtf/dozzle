@@ -28,17 +28,43 @@ toolbar:
   attach: Lampirkan
   copy-permalink: Salin tautan permanen
   copy-image: "Salin tag image"
+  pin: "Sematkan"
+  unpin: "Lepas sematan"
   copy-logs: Salin log
   copy-filtered-logs: Salin log terfilter
   copying-logs: Menyalin log...
+  streams: Stream
+  levels: Level
+  toggle-all-levels: Alihkan semua level
+  all: Semua
+  none: Tidak ada
+  section-logs: Log
+  section-filters: Filter
+  section-display: Tampilan
+  section-export: Ekspor
+  section-container: Kontainer
+  section-image: Image
 action:
   copy-log: Salin log
   copy-link: Salin permalink
   see-in-context: Lihat dalam konteks
   show-details: Tampilkan detail
   create-alert: Buat peringatan
+  ask-about-log: Tanya tentang log ini
 
+log-details:
+  on-std: pada {std}
+  image: Image
+  raw-json: JSON Mentah
+  copy: Salin
+  download: Unduh JSON
+  fields: Bidang
+  field: Bidang
+  value: Nilai
+  fields-hint: Seret untuk mengurutkan ulang. Alihkan untuk menampilkan atau menyembunyikan di aliran log.
+  toggle-all: Alihkan semua bidang
 label:
+  historical-at: "Log historis · {time}"
   containers: Kontainer
   container: Tidak ada kontainer | 1 kontainer | {count} kontainer
   alert-events: Tidak ada peristiwa | 1 peristiwa | {count} peristiwa
@@ -63,13 +89,15 @@ label:
   hosts: Host
   password: Kata sandi
   username: Nama pengguna
+  or: atau
   container-name: Nama Kontainer
   status: Status
   created: Dibuat
-  avg-cpu: Rata-rata CPU (%)
-  avg-mem: Rata-rata MEM (%)
+  avg-cpu: Rata-rata CPU
+  avg-mem: Rata-rata memori
   name: Nama
   cpu: CPU
+  core: Tidak ada inti | 1 inti | {count} inti
   mem: MEM
   pinned: Disematkan
   per-page: Baris per halaman
@@ -80,20 +108,29 @@ label:
   k8s-menu: Kubernetes
   group-menu: Grup Kustom
   no-logs: Kontainer belum memiliki log
+  no-logs-hint: "Apa pun yang ditulis kontainer akan langsung muncul di sini."
   search-status:
     searching: Mencari log lama…
     searching-to: Mencari log lama… kembali ke {time}
     capped: "{count} hasil · dicari kembali ke {time}"
     exhausted: Semua log dicari · {count} hasil
-    empty: Tidak ada hasil · semua log dicari
+    empty: "Tidak ada log yang cocok"
+    empty-hint: "Semua log sudah dicari. Coba kata lain atau hapus pencarian."
   show-all-containers: Tampilkan semua kontainer
   collapse-all: Tutup semua
   collapse-group: Tutup grup
   expand-all: Buka semua
+  more-options: Opsi lainnya
+  groups: Grup
 
 tooltip:
+  live-logs: Log ini dibekukan pada waktu ini. Klik untuk mengikuti aliran langsung.
   search: Cari kontainer (⌘ + k, ⌃k)
   pin-column: Sematkan sebagai kolom
+  unpin-column: Lepas sematan kolom
+  merge-stream: Gabungkan ke aliran
+  merge-stream-hint: Buka kontainer untuk digabungkan
+  unmerge-stream: Hapus dari aliran
   merge-all: Gabungkan semua ke dalam satu aliran
   network-io: "Jaringan: ↑ {tx}/s · ↓ {rx}/s"
   disk-io: "Disk: ↑ {write}/s · ↓ {read}/s"
@@ -120,6 +157,7 @@ error:
   page-not-found: Halaman ini tidak ada
   host-group-not-found: 'Tidak ada host yang ditemukan di grup "{name}"'
   invalid-auth: Nama pengguna atau kata sandi tidak valid
+  oauth-failed: Gagal masuk. Silakan coba lagi.
   copy-not-supported: Salin ke clipboard tidak didukung di browser Anda
   copy-not-supported-hint: Clipboard tidak tersedia. Salin tautan di bawah ini
   logs-skipped: Tampilkan {total} entri tersembunyi
@@ -166,8 +204,10 @@ title:
   notifications: Notifikasi
 
 button:
+  live-logs: Buka log langsung
   logout: Keluar
   login: Masuk
+  login-with: Lanjutkan dengan {provider}
   settings: Pengaturan
   cancel: Batal
   redirect: Alihkan
@@ -289,16 +329,48 @@ analytics:
   export: Ekspor
   export_csv: Unduh CSV
   export_json: Unduh JSON
+  query: Kueri
+  run: Jalankan
+  results: Hasil
 drawer:
   maximize: Maksimalkan
   restore: Pulihkan
+terminal:
+  connecting: Menghubungkan
+  connected: Terhubung
+  closed: Terputus
+  connection-closed: Koneksi ditutup
+  not-running: Kontainer tidak berjalan
+  reconnect: Hubungkan ulang
+  attaching: Menghubungkan ke {name}
+  decrease-font: Perkecil ukuran font
+  increase-font: Perbesar ukuran font
+  search: Cari
+  no-results: Tidak ada hasil
+  previous-match: Kecocokan sebelumnya
+  next-match: Kecocokan berikutnya
+  close-search: Tutup pencarian
 notifications:
+  history:
+    title: Aktivitas
+    loading: Memuat aktivitas…
+    failed: Tidak dapat memuat aktivitas.
+    empty-unlinked: Peringatan muncul di sini setelah instance ini ditautkan ke Dozzle Cloud. Sebelum itu, peringatan hanya lewat di aliran log dan hilang saat dimuat ulang.
+    empty: Belum ada yang terpicu baru-baru ini.
+    still-happening: masih berlangsung
+    events: "{n} kejadian"
+    suppressed: "· {n} ditekan"
+    show-lines: Tunjukkan barisnya
+    show-moment: Lihat log di sekitarnya
+    open-in-cloud: Buka di Dozzle Cloud
+    fired-recently: kali baru-baru ini
   title: Notifikasi
   description: Konfigurasikan di mana dan kapan menerima peringatan
   destinations: Tujuan
   add-destination: Tambah tujuan
   alerts: Peringatan
   add-alert: Tambah peringatan
+  new-alerts: Peringatan baru
   prefill-name: Peringatan kesalahan
   prefill-expression: level == "error"
   add: Tambah
@@ -478,13 +550,10 @@ notifications:
     cloud-exists: Dozzle Cloud sudah tertaut
     link-cloud: Tautkan Akun
     link-cloud-button: Tautkan Dozzle Cloud
-    cloud-settings-hint: Untuk mengonfigurasi saluran terkelola Anda, buka
     cloud-settings-link: Pengaturan Dozzle Cloud
     cloud-checking: Memeriksa status cloud...
     cloud-relink: Kunci API Anda tidak valid atau kedaluwarsa. Silakan hapus dan hubungkan akun Anda lagi.
     cloud-unavailable: Dozzle Cloud sedang tidak tersedia. Silakan coba lagi nanti.
-    cloud-plan: Paket
-    cloud-usage: Event periode ini
   empty-state:
     title: Mulai dengan notifikasi
     description: Pilih cara Anda ingin menerima peringatan saat kontainer Anda membutuhkan perhatian.
@@ -496,13 +565,20 @@ notifications:
 cloud:
   title: Dozzle Cloud
   description: Kendalikan kontainer Anda dari jarak jauh dan gunakan AI untuk menyelidiki masalah di seluruh kluster Anda.
+  pitch:
+    findings: Pemindaian AI harian atas error dan peringatan Anda
+    alerts: Peringatan waktu nyata untuk crash dan ambang batas
+    control: Jalankan, hentikan, dan periksa kontainer dari mana saja
   learn-more: Pelajari lebih lanjut
   link-instance: Tautkan instans
   relink-instance: Tautkan ulang instans
   connected: Terhubung
   pro-badge: Dozzle Cloud Pro
+  locked-on-this-plan: Tersedia dengan Dozzle Cloud Pro
   plan: Paket
-  usage: Event periode ini
+  usage: Event
+  usage-agent-messages: Obrolan agen
+  usage-log-bytes: Data terindeks
   dashboard: Dasbor
   settings: Pengaturan
   error: Kesalahan koneksi. Silakan tautkan ulang instans Anda.
@@ -510,6 +586,7 @@ cloud:
   unlink: Lepaskan tautan
   unlink-confirm: Apakah Anda yakin ingin melepaskan tautan dari Dozzle Cloud? Ini akan menghapus semua tujuan notifikasi cloud.
   privacy:
+    details-link: "Apa yang dikirim"
     toggle: "Streaming log dan metrik ke Dozzle Cloud"
     sends-heading: "Selama ini aktif, kontainer Anda terus mengirim:"
     sends-logs: "Baris log, saat ditulis"
@@ -517,7 +594,7 @@ cloud:
     never-heading: "Tidak pernah dikirim:"
     never-env: "Variabel lingkungan"
     off-note: "Nonaktifkan untuk menyimpan log dan metrik di instance ini. Peringatan yang sudah Anda atur tetap dikirim, dan akses kontainer jarak jauh tetap berfungsi."
-    per-container: "Kecualikan satu kontainer dengan label: dev.dozzle.cloud.min_level=disabled"
+    per-container: "Hentikan log satu kontainer dengan label: dev.dozzle.cloud.min_level=disabled"
     required-for: "Diperlukan untuk investigasi AI, pencarian log, dan riwayat sumber daya."
   welcome:
     watching-title: "Cloud mengawasi log Anda supaya Anda tidak perlu"
@@ -573,8 +650,63 @@ cloud:
       disk-free: "Volume dengan sisa kurang dari 1 GB"
       fatal: "Setiap baris fatal"
       error: "Setiap baris error"
+cloud-rail:
+  title: Dozzle Cloud
+  chat: Tanya Dozzle
+  metrics: Metrik
+  alerts: Peringatan
+  close: Tutup
+  hide: Sembunyikan bilah cloud
+  show: Tampilkan bilah cloud
+  alerts-empty-here: Belum ada yang terpicu pada yang sedang Anda lihat.
+  all-activity: Semua aktivitas
+  metrics-no-container: Buka kontainer untuk melihat riwayatnya.
+  metrics-loading: Memuat riwayat…
+  metrics-failed: Riwayat tidak dapat dimuat.
+  metrics-empty: Belum ada rekaman untuk rentang ini.
+  metrics-peak: puncak
+  metrics-bucket: rata-rata {duration}
+  window-1h: 1j
+  window-6h: 6j
+  window-24h: 24j
+  window-7d: 7 hr
+cloud-chat:
+  title: Tanya Dozzle
+  close: Tutup
+  clear: Hapus obrolan
+  empty: Tanyakan tentang yang sedang kamu lihat. Asisten bisa melihat tampilan ini dan membaca log-nya.
+  thinking: Berpikir…
+  doing:
+    logs: Membaca log…
+    containers: Memeriksa kontainer…
+    stats: Memeriksa penggunaan sumber daya…
+    inspect: Memeriksa kontainer…
+    notifications: Memeriksa notifikasi…
+    action: Menjalankan aksi…
+    working: Sedang bekerja…
+  placeholder: Tanya tentang log ini
+  historical: historis
+  n-containers: "{n} kontainer"
+  evidence: Dikirim bersama pertanyaan Anda
+  lines-in-view: "{n} baris terlihat"
+  this-log: Baris log ini
+  remove-log: Hapus baris log ini
+  send: Kirim
+  suggest-summarize: Ringkas apa yang terjadi
+  suggest-errors: Cari error dan peringatan
+  suggest-next: Apa yang harus saya periksa berikutnya?
+  error-unavailable: Asisten sedang tidak tersedia.
+  error-not-configured: Dozzle Cloud belum ditautkan, jadi tidak ada asisten untuk ditanya.
+  section-ask: Asisten
+  ask-for: Tanya Dozzle tentang {query}
+  ask-hint: Menjawab dari kontainer yang terlihat
+  ask-shortcut: untuk bertanya
 cloud-search:
   containers-section: "Kontainer"
+  section-logs: "Log"
+  no-matches: "Tidak ada kontainer atau perintah yang cocok"
+  nav-hint: "navigasi"
+  pin-shortcut: "sematkan kolom"
   search-logs-for: 'Cari log untuk "{query}"'
   across-containers: "diindeks di semua kontainer Anda"
   connect-to-enable: "Hubungkan Dozzle Cloud untuk mencari log"
@@ -603,6 +735,8 @@ cloud-search:
   container-removed-pill: "dihapus"
 command-palette:
   section-commands: Perintah
+  section-recent: "Terbaru"
+  run-hint: "jalankan perintah"
   restart-container: Mulai ulang {name}
   stop-container: Hentikan {name}
   start-container: Jalankan {name}

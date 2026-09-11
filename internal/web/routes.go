@@ -76,6 +76,20 @@ type CloudHooks struct {
 	// time window, so the log viewer can merge them into the stream on
 	// scrollback. Nil when cloud is not wired.
 	GetAlerts func(ctx context.Context, containerIDs []string, hostID string, fromNs, toNs int64, limit int32, includeFollowUps, includeEvents bool) (*cloud.AlertResult, error)
+
+	// GetRecentAlerts fetches what fired lately across the instance, for the
+	// notifications page and the container dot. Nil when cloud is not wired.
+	GetRecentAlerts func(ctx context.Context, sinceNs int64, limit int32, subscriptionID string, includeFollowUps bool) (*cloud.AlertResult, error)
+
+	// GetContainerMetrics reads back the stats this instance pushed for one
+	// container, past the live window the browser holds. Nil when cloud is not
+	// wired.
+	GetContainerMetrics func(ctx context.Context, containerName, hostID string, sinceNs, untilNs int64, buckets int32) (*cloud.MetricResult, error)
+
+	// Chat runs one assistant turn. The handler passes the principal it
+	// resolved from the request, so cloud's tool calls for that turn execute
+	// as the person who asked. Nil when cloud is not wired.
+	Chat func(ctx context.Context, message string, view cloud.ViewContext, userRef string, principal cloud.Principal, emit func(cloud.ChatEvent)) error
 }
 
 type Authorization struct {
@@ -88,6 +102,22 @@ type Authorization struct {
 type Authorizer interface {
 	AuthMiddleware(http.Handler) http.Handler
 	CreateToken(string, string) (string, error)
+}
+
+// OAuthAuthorizer is an Authorizer that can also sign a user in through an
+// external provider. It is an optional interface rather than a new AuthProvider
+// value: OAuth is a second way to prove you are one of the users simple auth
+// already owns, so branching on Provider here would put the same user behind two
+// role-resolution paths. A third vendor touches none of this routing.
+type OAuthAuthorizer interface {
+	Authorizer
+	// Providers is what the login page renders its buttons from.
+	Providers() []auth.OAuthProviderInfo
+	// PasswordLoginEnabled is false when no user has a password, so the login
+	// page can drop the form rather than offer one that cannot succeed.
+	PasswordLoginEnabled() bool
+	LoginHandler(http.ResponseWriter, *http.Request)
+	CallbackHandler(http.ResponseWriter, *http.Request)
 }
 
 type HostService interface {
@@ -225,18 +255,28 @@ func createRouter(h *handler) *chi.Mux {
 
 				// Cloud API
 				r.Route("/cloud", func(r chi.Router) {
-					r.Use(h.requireCloudRole)
+					// Reading is open to any authenticated user. The cloud role means
+					// "may link", not "may look" — cloud-backed reads are confined to
+					// the caller's own filter by the handlers themselves, the same way
+					// every other route is.
 					r.Get("/status", h.cloudStatus)
 					r.Get("/search/logs", h.cloudSearchLogs)
 					r.Get("/alerts", h.cloudAlerts)
+					r.Get("/alerts/recent", h.cloudRecentAlerts)
+					r.Get("/hosts/{host}/containers/{id}/metrics", h.cloudContainerMetrics)
+					r.Post("/chat", h.cloudChat)
 					r.Get("/config", h.cloudConfig)
-					r.Patch("/config", h.updateCloudConfig)
-					r.Delete("/config", h.deleteCloudConfig)
 					r.Post("/feedback", h.cloudFeedback)
+
+					// Linking and configuration stay behind the role. Relinking
+					// repoints alert dispatch, log streaming and tool execution at a
+					// different cloud account for everyone on the instance.
+					r.With(h.requireCloudRole).Patch("/config", h.updateCloudConfig)
+					r.With(h.requireCloudRole).Delete("/config", h.deleteCloudConfig)
 					// Cloud callback handles the OAuth-style code exchange. It must stay
 					// authenticated so an unauthenticated attacker cannot force-link the
 					// instance to their own cloud account via SetCloudConfig.
-					r.Get("/callback", h.cloudCallback)
+					r.With(h.requireCloudRole).Get("/callback", h.cloudCallback)
 				})
 
 				// MCP (Model Context Protocol) endpoint
@@ -250,6 +290,13 @@ func createRouter(h *handler) *chi.Mux {
 			if h.config.Authorization.Provider == SIMPLE {
 				r.Post("/token", h.createToken)
 				r.Delete("/token", h.deleteToken)
+
+				// Both have to stay unauthenticated: they are how a session is
+				// obtained in the first place.
+				if oauth, ok := h.config.Authorization.Authorizer.(OAuthAuthorizer); ok {
+					r.Get("/auth/login", oauth.LoginHandler)
+					r.Get("/auth/callback", oauth.CallbackHandler)
+				}
 			}
 		})
 

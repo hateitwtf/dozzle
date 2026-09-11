@@ -1,8 +1,10 @@
 package container
 
 import (
+	"math"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -66,7 +68,71 @@ var klogPrefix = regexp.MustCompile(`^([EWIDFTV])\d{4} \d{2}:\d{2}:\d{2}\.\d{6}`
 var timestampRegex = regexp.MustCompile(`^(?:\d{4}[-/]\d{2}[-/]\d{2}(?:[T ](?:\d{2}:\d{2}:\d{2}(?:[.,]\d+)?Z?|\d{2}:\d{2}(?:AM|PM)))?\s+)`)
 
 // JSON keys to check for log level (in priority order).
-var levelKeys = []string{"@l", "level", "log.level", "severity"}
+// severityText/severityNumber are the OpenTelemetry Log Data Model fields.
+var levelKeys = []string{"@l", "level", "log.level", "severity", "severityText", "severityNumber"}
+
+// Pino's default numeric levels. JSON numbers decode to float64.
+var pinoLevels = map[float64]string{
+	10: "trace",
+	20: "debug",
+	30: "info",
+	40: "warn",
+	50: "error",
+	60: "fatal",
+}
+
+// otelSeverityLevel maps an OpenTelemetry severityNumber to a canonical level.
+// Ranges per https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitynumber
+func otelSeverityLevel(n float64) string {
+	if n != math.Trunc(n) {
+		return ""
+	}
+	switch {
+	case n >= 1 && n <= 4:
+		return "trace"
+	case n >= 5 && n <= 8:
+		return "debug"
+	case n >= 9 && n <= 12:
+		return "info"
+	case n >= 13 && n <= 16:
+		return "warn"
+	case n >= 17 && n <= 20:
+		return "error"
+	case n >= 21 && n <= 24:
+		return "fatal"
+	}
+	return ""
+}
+
+// otelSeverityNumber reads an OTel severityNumber, which arrives as a JSON
+// number from JSON logs and as a string from logfmt-style maps (some JSON
+// emitters quote it too). Returns "" when it is not a usable severity.
+func otelSeverityNumber(v any) string {
+	switch n := v.(type) {
+	case float64:
+		return otelSeverityLevel(n)
+	case string:
+		if i, err := strconv.Atoi(strings.TrimSpace(n)); err == nil {
+			return otelSeverityLevel(float64(i))
+		}
+	}
+	return ""
+}
+
+// otelSeverityText normalizes an OTel severityText. On top of the usual aliases
+// it understands the spec's own short names for sub-levels, which append 1-4 to
+// the base name: TRACE2, INFO3, WARN4. Returns "unknown" for anything else so
+// the caller can fall back to severityNumber.
+func otelSeverityText(s string) string {
+	if level := normalizeLogLevel(s); level != "unknown" {
+		return level
+	}
+	s = StripANSI(s)
+	if n := len(s); n > 1 && s[n-1] >= '1' && s[n-1] <= '4' {
+		return normalizeLogLevel(s[:n-1])
+	}
+	return "unknown"
+}
 
 func init() {
 	SupportedLogLevels = make(map[string]struct{}, len(logLevels)+1)
@@ -115,9 +181,31 @@ func guessLogLevel(logEvent *LogEvent) string {
 			return "unknown"
 		}
 		for _, key := range levelKeys {
-			if v, ok := value.Get(key); ok {
+			v, ok := value.Get(key)
+			if !ok {
+				continue
+			}
+			switch key {
+			case "severityText":
+				// severityText is free-form, so a value we cannot map falls
+				// through to severityNumber instead of ending the search.
+				if s, ok := v.(string); ok {
+					if level := otelSeverityText(s); level != "unknown" {
+						return level
+					}
+				}
+			case "severityNumber":
+				if level := otelSeverityNumber(v); level != "" {
+					return level
+				}
+			default:
 				if s, ok := v.(string); ok {
 					return normalizeLogLevel(s)
+				}
+				if n, ok := v.(float64); ok && key == "level" {
+					if level, ok := pinoLevels[n]; ok {
+						return level
+					}
 				}
 			}
 		}
@@ -127,7 +215,20 @@ func guessLogLevel(logEvent *LogEvent) string {
 			return "unknown"
 		}
 		for _, key := range levelKeys {
-			if v, ok := value.Get(key); ok {
+			v, ok := value.Get(key)
+			if !ok {
+				continue
+			}
+			switch key {
+			case "severityText":
+				if level := otelSeverityText(v); level != "unknown" {
+					return level
+				}
+			case "severityNumber":
+				if level := otelSeverityNumber(v); level != "" {
+					return level
+				}
+			default:
 				return normalizeLogLevel(v)
 			}
 		}

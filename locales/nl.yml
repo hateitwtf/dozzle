@@ -28,16 +28,42 @@ toolbar:
   attach: Koppelen
   copy-permalink: Permanente link kopiëren
   copy-image: "Image-tag kopiëren"
+  pin: "Vastzetten"
+  unpin: "Losmaken"
   copy-logs: Logs kopiëren
   copy-filtered-logs: Gefilterde logs kopiëren
   copying-logs: Logs kopiëren...
+  streams: Streams
+  levels: Niveaus
+  toggle-all-levels: Alle niveaus omschakelen
+  all: Alle
+  none: Geen
+  section-logs: Logs
+  section-filters: Filters
+  section-display: Weergave
+  section-export: Exporteren
+  section-container: Container
+  section-image: Image
 action:
   copy-log: Log kopiëren
   copy-link: Permalink kopiëren
   see-in-context: Bekijk in context
   show-details: Toon details
   create-alert: Waarschuwing aanmaken
+  ask-about-log: Vraag over deze log
+log-details:
+  on-std: op {std}
+  image: Image
+  raw-json: Ruwe JSON
+  copy: Kopiëren
+  download: JSON downloaden
+  fields: Velden
+  field: Veld
+  value: Waarde
+  fields-hint: Sleep om te herordenen. Schakel in of uit om ze in de logstroom te tonen of te verbergen.
+  toggle-all: Alle velden omschakelen
 label:
+  historical-at: "Historische logs · {time}"
   containers: Containers
   container: Geen containers | 1 container | {count} containers
   alert-events: Geen gebeurtenissen | 1 gebeurtenis | {count} gebeurtenissen
@@ -62,13 +88,15 @@ label:
   hosts: Hosts
   password: Wachtwoord
   username: Gebruikersnaam
+  or: of
   container-name: Containernaam
   status: Status
   created: Aangemaakt
-  avg-cpu: Gem. CPU (%)
-  avg-mem: Gem. geheugen (%)
+  avg-cpu: Gem. CPU
+  avg-mem: Gem. geheugen
   name: Naam
   cpu: CPU
+  core: Geen kernen | 1 kern | {count} kernen
   mem: MEM
   pinned: Vastgezet
   per-page: Rijen per pagina
@@ -79,19 +107,28 @@ label:
   k8s-menu: Kubernetes
   group-menu: Aangepaste groepen
   no-logs: Container heeft nog geen logbestanden
+  no-logs-hint: "Alles wat de container schrijft, verschijnt hier direct."
   search-status:
     searching: Oudere logs doorzoeken…
     searching-to: Oudere logs doorzoeken… terug tot {time}
     capped: "{count} overeenkomsten · doorzocht tot {time}"
     exhausted: Alle logs doorzocht · {count} overeenkomsten
-    empty: Geen overeenkomsten · alle logs doorzocht
+    empty: "Geen overeenkomende logs"
+    empty-hint: "Alle logs doorzocht. Probeer een andere zoekterm of wis de zoekopdracht."
   show-all-containers: Toon alle containers
   collapse-all: Alles inklappen
   collapse-group: Groep inklappen
   expand-all: Alles uitklappen
+  more-options: Meer opties
+  groups: Groepen
 tooltip:
+  live-logs: Deze logs zijn bevroren op dit tijdstip. Klik om de live stream te volgen.
   search: Zoek containers (⌘ + k, ⌃k)
   pin-column: Vastzetten als kolom
+  unpin-column: Kolom losmaken
+  merge-stream: Samenvoegen met stream
+  merge-stream-hint: Open een container om mee samen te voegen
+  unmerge-stream: Verwijderen uit stream
   merge-all: Voeg alles samen in één stream
   network-io: "Netwerk: ↑ {tx}/s · ↓ {rx}/s"
   disk-io: "Schijf: ↑ {write}/s · ↓ {read}/s"
@@ -117,6 +154,7 @@ error:
   page-not-found: Deze pagina bestaat niet
   host-group-not-found: 'Geen hosts gevonden in groep "{name}"'
   invalid-auth: Gebruikersnaam of wachtwoord is ongeldig
+  oauth-failed: Aanmelden mislukt. Probeer het opnieuw.
   copy-not-supported: Kopiëren naar klembord wordt niet ondersteund in je browser
   copy-not-supported-hint: Klembord niet beschikbaar. Kopieer de link hieronder
   logs-skipped: Toon {total} verborgen items
@@ -161,8 +199,10 @@ title:
   settings: Instellingen
   notifications: Meldingen
 button:
+  live-logs: Naar live logs
   logout: Afmelden
   login: Aanmelden
+  login-with: Doorgaan met {provider}
   settings: Instellingen
   cancel: Annuleren
   redirect: Doorsturen
@@ -278,16 +318,48 @@ analytics:
   export: Exporteren
   export_csv: CSV downloaden
   export_json: JSON downloaden
+  query: Query
+  run: Uitvoeren
+  results: Resultaten
 drawer:
   maximize: Maximaliseren
   restore: Herstellen
+terminal:
+  connecting: Verbinden
+  connected: Verbonden
+  closed: Verbroken
+  connection-closed: Verbinding gesloten
+  not-running: Container draait niet
+  reconnect: Opnieuw verbinden
+  attaching: Verbinden met {name}
+  decrease-font: Lettergrootte verkleinen
+  increase-font: Lettergrootte vergroten
+  search: Zoeken
+  no-results: Geen resultaten
+  previous-match: Vorige overeenkomst
+  next-match: Volgende overeenkomst
+  close-search: Zoeken sluiten
 notifications:
+  history:
+    title: Activiteit
+    loading: Activiteit laden…
+    failed: Kon activiteit niet laden.
+    empty-unlinked: Waarschuwingen verschijnen hier zodra deze instantie aan Dozzle Cloud is gekoppeld. Tot dan komen ze langs in de logstroom en zijn ze na verversen vergeten.
+    empty: Er is recent niets afgegaan.
+    still-happening: gebeurt nog steeds
+    events: "{n} gebeurtenissen"
+    suppressed: "· {n} onderdrukt"
+    show-lines: Laat me de regels zien
+    show-moment: Toon de logs eromheen
+    open-in-cloud: Openen in Dozzle Cloud
+    fired-recently: keer recent
   title: Meldingen
   description: Configureer waar en wanneer je waarschuwingen ontvangt
   destinations: Bestemmingen
   add-destination: Bestemming toevoegen
   alerts: Waarschuwingen
   add-alert: Waarschuwing toevoegen
+  new-alerts: Nieuwe waarschuwingen
   prefill-name: Foutwaarschuwingen
   prefill-expression: level == "error"
   add: Toevoegen
@@ -467,13 +539,10 @@ notifications:
     cloud-exists: Dozzle Cloud is al gekoppeld
     link-cloud: Account koppelen
     link-cloud-button: Dozzle Cloud koppelen
-    cloud-settings-hint: Om je beheerde kanalen te configureren, ga naar
     cloud-settings-link: Dozzle Cloud-instellingen
     cloud-checking: Cloudstatus controleren...
     cloud-relink: Uw API-sleutel is ongeldig of verlopen. Verwijder en koppel uw account opnieuw.
     cloud-unavailable: Dozzle Cloud is tijdelijk niet beschikbaar. Probeer het later opnieuw.
-    cloud-plan: Plan
-    cloud-usage: Gebeurtenissen deze periode
   empty-state:
     title: Aan de slag met meldingen
     description: Kies hoe je waarschuwingen wilt ontvangen wanneer je containers aandacht nodig hebben.
@@ -485,13 +554,20 @@ notifications:
 cloud:
   title: Dozzle Cloud
   description: Beheer je containers op afstand en gebruik AI om problemen in je cluster te onderzoeken.
+  pitch:
+    findings: Dagelijkse AI-scan van je fouten en waarschuwingen
+    alerts: Realtime meldingen bij crashes en drempelwaarden
+    control: Start, stop en inspecteer containers vanaf overal
   learn-more: Meer informatie
   link-instance: Instantie koppelen
   relink-instance: Instantie opnieuw koppelen
   connected: Verbonden
   pro-badge: Dozzle Cloud Pro
+  locked-on-this-plan: Beschikbaar met Dozzle Cloud Pro
   plan: Plan
-  usage: Gebeurtenissen deze periode
+  usage: Gebeurtenissen
+  usage-agent-messages: Agentgesprekken
+  usage-log-bytes: Geïndexeerde data
   dashboard: Dashboard
   settings: Instellingen
   error: Verbindingsfout. Koppel je instantie opnieuw.
@@ -499,6 +575,7 @@ cloud:
   unlink: Ontkoppelen
   unlink-confirm: Weet je zeker dat je de koppeling met Dozzle Cloud wilt opheffen? Dit verwijdert alle cloudmeldingsbestemmingen.
   privacy:
+    details-link: "Wat wordt verstuurd"
     toggle: "Logs en metrieken streamen naar Dozzle Cloud"
     sends-heading: "Zolang dit aanstaat, sturen je containers continu:"
     sends-logs: "Logregels, zodra ze worden geschreven"
@@ -506,7 +583,7 @@ cloud:
     never-heading: "Wordt nooit verstuurd:"
     never-env: "Omgevingsvariabelen"
     off-note: "Schakel dit uit om logs en metrieken op deze instantie te houden. Ingestelde meldingen worden nog steeds bezorgd en toegang tot containers op afstand blijft werken."
-    per-container: "Sluit één container uit met het label: dev.dozzle.cloud.min_level=disabled"
+    per-container: "Stop de logs van één container met het label: dev.dozzle.cloud.min_level=disabled"
     required-for: "Vereist voor AI-onderzoek, zoeken in logs en resourcegeschiedenis."
   welcome:
     watching-title: "Cloud houdt je logs in de gaten zodat jij dat niet hoeft"
@@ -562,8 +639,63 @@ cloud:
       disk-free: "Volume met minder dan 1 GB vrij"
       fatal: "Elke fatal-regel"
       error: "Elke error-regel"
+cloud-rail:
+  title: Dozzle Cloud
+  chat: Vraag Dozzle
+  metrics: Metrieken
+  alerts: Waarschuwingen
+  close: Sluiten
+  hide: Cloudbalk verbergen
+  show: Cloudbalk tonen
+  alerts-empty-here: Er is niets afgegaan voor wat je bekijkt.
+  all-activity: Alle activiteit
+  metrics-no-container: Open een container om de geschiedenis te zien.
+  metrics-loading: Geschiedenis laden…
+  metrics-failed: Kon de geschiedenis niet laden.
+  metrics-empty: Nog niets vastgelegd voor dit venster.
+  metrics-peak: piek
+  metrics-bucket: "{duration}-gemiddelden"
+  window-1h: 1u
+  window-6h: 6u
+  window-24h: 24u
+  window-7d: 7 d
+cloud-chat:
+  title: Vraag het Dozzle
+  close: Sluiten
+  clear: Chat wissen
+  empty: Stel een vraag over wat je ziet. De assistent kent deze weergave en leest deze logs.
+  thinking: Aan het denken…
+  doing:
+    logs: Logs lezen…
+    containers: Containers bekijken…
+    stats: Resourcegebruik controleren…
+    inspect: Container inspecteren…
+    notifications: Meldingen controleren…
+    action: Actie uitvoeren…
+    working: Bezig…
+  placeholder: Vraag over deze logs
+  historical: historisch
+  n-containers: "{n} containers"
+  evidence: Wordt met je vraag meegestuurd
+  lines-in-view: "{n} regels in beeld"
+  this-log: Deze logregel
+  remove-log: Deze logregel verwijderen
+  send: Versturen
+  suggest-summarize: Vat samen wat er gebeurt
+  suggest-errors: Zoek de fouten en waarschuwingen
+  suggest-next: Waar moet ik hierna kijken?
+  error-unavailable: De assistent is nu niet beschikbaar.
+  error-not-configured: Dozzle Cloud is niet gekoppeld, dus er is geen assistent om iets aan te vragen.
+  section-ask: Assistent
+  ask-for: Dozzle vragen over {query}
+  ask-hint: Antwoordt vanuit de zichtbare containers
+  ask-shortcut: om te vragen
 cloud-search:
   containers-section: "Containers"
+  section-logs: "Logs"
+  no-matches: "Geen containers of commando's gevonden"
+  nav-hint: "navigeren"
+  pin-shortcut: "kolom vastzetten"
   search-logs-for: 'Logs zoeken op "{query}"'
   across-containers: "geïndexeerd over al je containers"
   connect-to-enable: "Dozzle Cloud verbinden om logs te zoeken"
@@ -592,6 +724,8 @@ cloud-search:
   container-removed-pill: "verwijderd"
 command-palette:
   section-commands: Opdrachten
+  section-recent: "Recent"
+  run-hint: "commando uitvoeren"
   restart-container: "{name} opnieuw starten"
   stop-container: "{name} stoppen"
   start-container: "{name} starten"

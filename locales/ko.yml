@@ -28,16 +28,42 @@ toolbar:
   attach: 연결
   copy-permalink: 영구 링크 복사
   copy-image: "이미지 태그 복사"
+  pin: "고정"
+  unpin: "고정 해제"
   copy-logs: 로그 복사
   copy-filtered-logs: 필터된 로그 복사
   copying-logs: 로그 복사 중...
+  streams: 스트림
+  levels: 레벨
+  toggle-all-levels: 모든 레벨 전환
+  all: 전체
+  none: 없음
+  section-logs: 로그
+  section-filters: 필터
+  section-display: 표시
+  section-export: 내보내기
+  section-container: 컨테이너
+  section-image: 이미지
 action:
   copy-log: 로그 복사
   copy-link: 영구 링크 복사
   see-in-context: 컨텍스트에서 보기
   show-details: 세부 정보 표시
   create-alert: 알림 생성
+  ask-about-log: 이 로그에 대해 질문
+log-details:
+  on-std: "{std}에서"
+  image: 이미지
+  raw-json: 원본 JSON
+  copy: 복사
+  download: JSON 다운로드
+  fields: 필드
+  field: 필드
+  value: 값
+  fields-hint: 드래그하여 순서를 바꾸세요. 토글하여 로그 스트림에서 표시하거나 숨깁니다.
+  toggle-all: 모든 필드 토글
 label:
+  historical-at: "과거 로그 · {time}"
   containers: 컨테이너
   container: 컨테이너가 없습니다 | 컨테이너 1개 | 컨테이너 {count}개
   alert-events: 이벤트 없음 | 이벤트 1개 | 이벤트 {count}개
@@ -62,13 +88,15 @@ label:
   hosts: 호스트
   password: 비밀번호
   username: 사용자 이름
+  or: 또는
   container-name: 컨테이너 이름
   status: 상태
   created: 만든 날짜
-  avg-cpu: 평균 CPU (%)
-  avg-mem: 평균 메모리 (%)
+  avg-cpu: 평균 CPU
+  avg-mem: 평균 메모리
   name: 이름
   cpu: CPU
+  core: 코어 없음 | 코어 1개 | 코어 {count}개
   mem: 메모리
   pinned: 고정됨
   per-page: 페이지당 행 수
@@ -79,19 +107,28 @@ label:
   k8s-menu: 쿠버네티스
   group-menu: 사용자 그룹
   no-logs: 아직 로그가 없습니다
+  no-logs-hint: "컨테이너가 출력하는 내용이 바로 여기에 표시됩니다."
   search-status:
     searching: 이전 로그 검색 중…
     searching-to: 이전 로그 검색 중… {time}까지
     capped: "{count}개 일치 · {time}까지 검색함"
     exhausted: 모든 로그 검색 완료 · {count}개 일치
-    empty: 일치 항목 없음 · 모든 로그 검색함
+    empty: "일치하는 로그가 없습니다"
+    empty-hint: "모든 로그를 검색했습니다. 다른 검색어를 시도하거나 검색을 지우세요."
   show-all-containers: 전체 컨테이너 보기
   collapse-all: 전체 접기
   collapse-group: 그룹 접기
   expand-all: 전체 펼치기
+  more-options: 추가 옵션
+  groups: 그룹
 tooltip:
+  live-logs: 이 로그는 해당 시점에 고정되어 있습니다. 실시간 스트림을 보려면 클릭하세요.
   search: 컨테이너 검색 (⌘ + k, ⌃k)
   pin-column: 열로 고정
+  unpin-column: 열 고정 해제
+  merge-stream: 스트림에 병합
+  merge-stream-hint: 병합하려면 먼저 컨테이너를 여세요
+  unmerge-stream: 스트림에서 제거
   merge-all: 모두 하나의 스트림으로 병합
   network-io: "네트워크: ↑ {tx}/s · ↓ {rx}/s"
   disk-io: "디스크: ↑ {write}/s · ↓ {read}/s"
@@ -117,6 +154,7 @@ error:
   page-not-found: 페이지를 찾을 수 없습니다
   host-group-not-found: '"{name}" 그룹에 호스트가 없습니다'
   invalid-auth: 사용자 이름 또는 비밀번호가 올바르지 않습니다
+  oauth-failed: 로그인에 실패했습니다. 다시 시도해 주세요.
   copy-not-supported: 클립보드 복사는 브라우저에서 지원되지 않습니다
   copy-not-supported-hint: 클립보드를 사용할 수 없습니다. 아래 링크를 복사하세요
   logs-skipped: 숨겨진 항목 {total}개 보기
@@ -162,8 +200,10 @@ title:
   settings: 설정
   notifications: 알림
 button:
+  live-logs: 실시간 로그로 이동
   logout: 로그아웃
   login: 로그인
+  login-with: "{provider}(으)로 계속하기"
   settings: 설정
   cancel: 취소
   redirect: 이동
@@ -281,16 +321,48 @@ analytics:
   export: 내보내기
   export_csv: CSV 다운로드
   export_json: JSON 다운로드
+  query: 쿼리
+  run: 실행
+  results: 결과
 drawer:
   maximize: 최대화
   restore: 복원
+terminal:
+  connecting: 연결 중
+  connected: 연결됨
+  closed: 연결 끊김
+  connection-closed: 연결이 종료되었습니다
+  not-running: 컨테이너가 실행 중이 아닙니다
+  reconnect: 다시 연결
+  attaching: "{name}에 연결하는 중"
+  decrease-font: 글꼴 크기 줄이기
+  increase-font: 글꼴 크기 키우기
+  search: 검색
+  no-results: 결과 없음
+  previous-match: 이전 일치 항목
+  next-match: 다음 일치 항목
+  close-search: 검색 닫기
 notifications:
+  history:
+    title: 활동
+    loading: 활동을 불러오는 중…
+    failed: 활동을 불러올 수 없습니다.
+    empty-unlinked: 이 인스턴스를 Dozzle Cloud에 연결하면 알림이 여기에 표시됩니다. 그전까지는 로그 스트림에만 나타나고 새로고침하면 사라집니다.
+    empty: 최근에 발생한 알림이 없습니다.
+    still-happening: 계속 발생 중
+    events: 이벤트 {n}건
+    suppressed: "· {n}건 억제됨"
+    show-lines: 해당 로그 보기
+    show-moment: 그 시점의 로그 보기
+    open-in-cloud: Dozzle Cloud에서 열기
+    fired-recently: 회 (최근)
   title: 알림
   description: 알림을 받을 위치와 시간을 설정합니다
   destinations: 목적지
   add-destination: 목적지 추가
   alerts: 알림
   add-alert: 알림 추가
+  new-alerts: 새 알림
   add: 추가
   prefill-name: 오류 알림
   prefill-expression: level == "error"
@@ -470,13 +542,10 @@ notifications:
     cloud-exists: Dozzle Cloud가 이미 연결되어 있습니다
     link-cloud: 계정 연결
     link-cloud-button: Dozzle Cloud 연결
-    cloud-settings-hint: 관리 채널을 설정하려면 다음으로 이동하세요
     cloud-settings-link: Dozzle Cloud 설정
     cloud-checking: 클라우드 상태 확인 중...
     cloud-relink: API 키가 유효하지 않거나 만료되었습니다. 삭제 후 계정을 다시 연결해 주세요.
     cloud-unavailable: Dozzle Cloud를 일시적으로 사용할 수 없습니다. 나중에 다시 시도해 주세요.
-    cloud-plan: 플랜
-    cloud-usage: 이번 기간 이벤트
   empty-state:
     title: 알림 시작하기
     description: 컨테이너에 문제가 생겼을 때 알림을 받을 방법을 선택하세요.
@@ -488,13 +557,20 @@ notifications:
 cloud:
   title: Dozzle Cloud
   description: 원격으로 컨테이너를 제어하고 AI를 사용하여 클러스터 전반의 문제를 조사하세요.
+  pitch:
+    findings: 오류와 경고를 매일 AI로 분석
+    alerts: 충돌과 임계값에 대한 실시간 알림
+    control: 어디서나 컨테이너 시작, 중지, 확인
   learn-more: 자세히 알아보기
   link-instance: 인스턴스 연결
   relink-instance: 인스턴스 재연결
   connected: 연결됨
   pro-badge: Dozzle Cloud Pro
+  locked-on-this-plan: Dozzle Cloud Pro에서 사용할 수 있습니다
   plan: 플랜
-  usage: 이번 기간 이벤트
+  usage: 이벤트
+  usage-agent-messages: 에이전트 대화
+  usage-log-bytes: 색인된 데이터
   dashboard: 대시보드
   settings: 설정
   error: 연결 오류. 인스턴스를 다시 연결해 주세요.
@@ -502,6 +578,7 @@ cloud:
   unlink: 연결 해제
   unlink-confirm: Dozzle Cloud 연결을 해제하시겠습니까? 모든 클라우드 알림 목적지가 삭제됩니다.
   privacy:
+    details-link: "전송되는 항목"
     toggle: "로그와 메트릭을 Dozzle Cloud로 전송"
     sends-heading: "이 설정이 켜져 있는 동안 컨테이너는 다음을 계속 전송합니다:"
     sends-logs: "기록되는 즉시 전송되는 로그 라인"
@@ -509,7 +586,7 @@ cloud:
     never-heading: "전송하지 않는 항목:"
     never-env: "환경 변수"
     off-note: "로그와 메트릭을 이 인스턴스에만 유지하려면 이 설정을 끄세요. 설정한 알림은 계속 전달되며 원격 컨테이너 접근도 그대로 작동합니다."
-    per-container: "특정 컨테이너만 제외하려면 라벨을 사용하세요: dev.dozzle.cloud.min_level=disabled"
+    per-container: "특정 컨테이너의 로그를 중지하려면 라벨을 사용하세요: dev.dozzle.cloud.min_level=disabled"
     required-for: "AI 분석, 로그 검색, 리소스 기록에 필요합니다."
   welcome:
     watching-title: "Cloud가 대신 로그를 지켜봅니다"
@@ -565,8 +642,63 @@ cloud:
       disk-free: "볼륨 여유 공간 1GB 미만"
       fatal: "모든 fatal 줄"
       error: "모든 error 줄"
+cloud-rail:
+  title: Dozzle Cloud
+  chat: Dozzle에게 질문
+  metrics: 메트릭
+  alerts: 알림
+  close: 닫기
+  hide: 클라우드 레일 숨기기
+  show: 클라우드 레일 표시
+  alerts-empty-here: 보고 있는 대상에서 발생한 알림이 없습니다.
+  all-activity: 전체 활동
+  metrics-no-container: 컨테이너를 열면 기록을 볼 수 있습니다.
+  metrics-loading: 기록 불러오는 중…
+  metrics-failed: 기록을 불러오지 못했습니다.
+  metrics-empty: 이 구간에 기록된 데이터가 아직 없습니다.
+  metrics-peak: 최고
+  metrics-bucket: "{duration} 평균"
+  window-1h: 1시간
+  window-6h: 6시간
+  window-24h: 24시간
+  window-7d: 7일
+cloud-chat:
+  title: Dozzle에 질문
+  close: 닫기
+  clear: 대화 지우기
+  empty: 지금 보고 있는 것에 대해 물어보세요. 어시스턴트가 이 화면과 로그를 함께 봅니다.
+  thinking: 생각 중…
+  doing:
+    logs: 로그 읽는 중…
+    containers: 컨테이너 확인 중…
+    stats: 리소스 사용량 확인 중…
+    inspect: 컨테이너 검사 중…
+    notifications: 알림 확인 중…
+    action: 작업 실행 중…
+    working: 작업 중…
+  placeholder: 이 로그에 대해 질문
+  historical: 기록 보기
+  n-containers: 컨테이너 {n}개
+  evidence: 질문과 함께 전송됨
+  lines-in-view: 화면의 {n}줄
+  this-log: 이 로그 줄
+  remove-log: 이 로그 줄 제거
+  send: 보내기
+  suggest-summarize: 무슨 일인지 요약해 줘
+  suggest-errors: 오류와 경고 찾기
+  suggest-next: 다음으로 무엇을 봐야 할까?
+  error-unavailable: 지금은 어시스턴트를 사용할 수 없습니다.
+  error-not-configured: Dozzle Cloud가 연결되지 않아 질문할 어시스턴트가 없습니다.
+  section-ask: 어시스턴트
+  ask-for: "{query}에 대해 Dozzle에 질문"
+  ask-hint: 화면에 있는 컨테이너를 근거로 답합니다
+  ask-shortcut: 질문하기
 cloud-search:
   containers-section: "컨테이너"
+  section-logs: "로그"
+  no-matches: "일치하는 컨테이너나 명령이 없습니다"
+  nav-hint: "이동"
+  pin-shortcut: "열로 고정"
   search-logs-for: '"{query}" 로그 검색'
   across-containers: "모든 컨테이너에서 색인됨"
   connect-to-enable: "로그를 검색하려면 Dozzle Cloud에 연결하세요"
@@ -595,6 +727,8 @@ cloud-search:
   container-removed-pill: "삭제됨"
 command-palette:
   section-commands: 명령
+  section-recent: "최근"
+  run-hint: "명령 실행"
   restart-container: "{name} 재시작"
   stop-container: "{name} 중지"
   start-container: "{name} 시작"

@@ -7,6 +7,114 @@ import (
 	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
+func TestGuessPinoLogLevel(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{`{"level":10,"msg":"trace message"}`, "trace"},
+		{`{"level":20,"msg":"debug message"}`, "debug"},
+		{`{"level":30,"time":1788571152988,"pid":1,"hostname":"example","msg":"Service started"}`, "info"},
+		{`{"level":40,"msg":"warning message"}`, "warn"},
+		{`{"level":50,"msg":"error message"}`, "error"},
+		{`{"level":60,"msg":"fatal message"}`, "fatal"},
+		{`{"level":30.0}`, "info"},
+		{`{"level":35}`, "unknown"},
+		{`{"level":30.5}`, "unknown"},
+		{`{"level":0}`, "unknown"},
+		{`{"level":-10}`, "unknown"},
+		{`{"level":70}`, "unknown"},
+		{`{"level":null}`, "unknown"},
+		{`{"level":true}`, "unknown"},
+		{`{"level":"30"}`, "unknown"},
+		{`{"severity":30}`, "unknown"},
+		{`{"@l":30}`, "unknown"},
+		{`{"log.level":30}`, "unknown"},
+		{`{"@l":"error","level":30}`, "error"},
+		{`{"level":30,"severity":"error"}`, "info"},
+		{`{"level":35,"severity":"warn"}`, "warn"},
+	}
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			// Exercise the same JSON decoding path as container logs.
+			event := createEvent("2026-09-05T00:00:00Z "+test.input, STDOUT)
+			if event.Type != LogTypeComplex {
+				t.Fatalf("Expected JSON log event, got %v", event.Type)
+			}
+			if actual := guessLogLevel(event); actual != test.expected {
+				t.Errorf("Expected %s, got %s", test.expected, actual)
+			}
+		})
+	}
+}
+
+func TestGuessOtelLogLevel(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		// severityText follows the OpenTelemetry Log Data Model.
+		{`{"severityText":"TRACE","body":"trace message"}`, "trace"},
+		{`{"severityText":"DEBUG","body":"debug message"}`, "debug"},
+		{`{"severityText":"INFO","body":"info message"}`, "info"},
+		{`{"severityText":"WARN","body":"warn message"}`, "warn"},
+		{`{"severityText":"ERROR","body":"error message"}`, "error"},
+		{`{"severityText":"FATAL","body":"fatal message"}`, "fatal"},
+		{`{"severityText":"information","body":"lower case"}`, "info"},
+		{`{"severityText":"bogus","body":"not a level"}`, "unknown"},
+		// OTel short names for sub-levels append 1-4 to the base name.
+		{`{"severityText":"TRACE2"}`, "trace"},
+		{`{"severityText":"DEBUG3"}`, "debug"},
+		{`{"severityText":"INFO4"}`, "info"},
+		{`{"severityText":"WARN2"}`, "warn"},
+		{`{"severityText":"ERROR3"}`, "error"},
+		{`{"severityText":"FATAL4"}`, "fatal"},
+		{`{"severityText":"INFO5"}`, "unknown"},
+		// A severityText we cannot map falls back to severityNumber.
+		{`{"severityText":"WARN2","severityNumber":14}`, "warn"},
+		{`{"severityText":"Notice","severityNumber":9}`, "info"},
+		{`{"severityText":"","severityNumber":17}`, "error"},
+		{`{"severityText":"bogus","severityNumber":0}`, "unknown"},
+		{`{"severityText":42,"severityNumber":21}`, "fatal"},
+		// severityNumber ranges per the OTel spec.
+		{`{"severityNumber":1}`, "trace"},
+		{`{"severityNumber":4}`, "trace"},
+		{`{"severityNumber":5}`, "debug"},
+		{`{"severityNumber":8}`, "debug"},
+		{`{"severityNumber":9}`, "info"},
+		{`{"severityNumber":12}`, "info"},
+		{`{"severityNumber":13}`, "warn"},
+		{`{"severityNumber":16}`, "warn"},
+		{`{"severityNumber":17}`, "error"},
+		{`{"severityNumber":20}`, "error"},
+		{`{"severityNumber":21}`, "fatal"},
+		{`{"severityNumber":24}`, "fatal"},
+		{`{"severityNumber":0}`, "unknown"},
+		{`{"severityNumber":25}`, "unknown"},
+		{`{"severityNumber":-5}`, "unknown"},
+		{`{"severityNumber":9.5}`, "unknown"},
+		{`{"severityNumber":"17"}`, "error"},
+		{`{"severityNumber":"nope"}`, "unknown"},
+		{`{"severityNumber":true}`, "unknown"},
+		// Existing keys keep their priority over the OTel fields.
+		{`{"level":30,"severityText":"ERROR"}`, "info"},
+		{`{"level":50,"severityNumber":9}`, "error"},
+		{`{"severity":"warn","severityText":"ERROR"}`, "warn"},
+	}
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			// Exercise the same JSON decoding path as container logs.
+			event := createEvent("2026-09-05T00:00:00Z "+test.input, STDOUT)
+			if event.Type != LogTypeComplex {
+				t.Fatalf("Expected JSON log event, got %v", event.Type)
+			}
+			if actual := guessLogLevel(event); actual != test.expected {
+				t.Errorf("Expected %s, got %s", test.expected, actual)
+			}
+		})
+	}
+}
+
 func TestGuessLogLevel(t *testing.T) {
 	var nilOrderedMap *orderedmap.OrderedMap[string, any]
 	tests := []struct {
@@ -73,6 +181,32 @@ func TestGuessLogLevel(t *testing.T) {
 			orderedmap.WithInitialData(
 				orderedmap.Pair[string, any]{Key: "key", Value: "value"},
 				orderedmap.Pair[string, any]{Key: "severity", Value: "info"},
+			),
+		), "info"},
+		{orderedmap.New[string, string](
+			orderedmap.WithInitialData(
+				orderedmap.Pair[string, string]{Key: "severityText", Value: "ERROR"},
+			),
+		), "error"},
+		{orderedmap.New[string, string](
+			orderedmap.WithInitialData(
+				orderedmap.Pair[string, string]{Key: "severityNumber", Value: "17"},
+			),
+		), "error"},
+		{orderedmap.New[string, string](
+			orderedmap.WithInitialData(
+				orderedmap.Pair[string, string]{Key: "severityNumber", Value: "not-a-number"},
+			),
+		), "unknown"},
+		{orderedmap.New[string, string](
+			orderedmap.WithInitialData(
+				orderedmap.Pair[string, string]{Key: "severityText", Value: "WARN2"},
+			),
+		), "warn"},
+		{orderedmap.New[string, string](
+			orderedmap.WithInitialData(
+				orderedmap.Pair[string, string]{Key: "severityText", Value: "Notice"},
+				orderedmap.Pair[string, string]{Key: "severityNumber", Value: "9"},
 			),
 		), "info"},
 		{orderedmap.New[string, string](

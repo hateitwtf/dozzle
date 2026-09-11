@@ -28,6 +28,7 @@ type Settings struct {
 	ShowAllContainers bool    `json:"showAllContainers"`
 	SoftWrap          bool    `json:"softWrap"`
 	CollapseNav       bool    `json:"collapseNav"`
+	CollapseCloudRail bool    `json:"collapseCloudRail"`
 	AutomaticRedirect string  `json:"automaticRedirect"`
 	Size              string  `json:"size,omitempty"`
 	Compact           bool    `json:"compact"`
@@ -46,6 +47,10 @@ type Profile struct {
 	CollapsedGroups       []string  `json:"collapsedGroups"`
 	DismissedImageUpdates []string  `json:"dismissedImageUpdates,omitempty"`
 	DismissedLinkHint     bool      `json:"dismissedLinkHint,omitempty"`
+	// Nanoseconds of the newest alert this user has opened the history for.
+	// Follows them across browsers, because "have I looked at this" is about
+	// the person and not the machine.
+	LastSeenAlertTs int64 `json:"lastSeenAlertTs,omitempty"`
 }
 
 var dataPath string

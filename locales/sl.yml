@@ -14,9 +14,22 @@ toolbar:
   attach: Priloži
   copy-permalink: Kopiraj trajno povezavo
   copy-image: "Kopiraj oznako slike"
+  pin: "Pripni"
+  unpin: "Odpni"
   copy-logs: Kopiraj dnevnike
   copy-filtered-logs: Kopiraj filtrirane dnevnike
   copying-logs: Kopiranje dnevnikov...
+  streams: Tokovi
+  levels: Ravni
+  toggle-all-levels: Preklopi vse ravni
+  all: Vse
+  none: Brez
+  section-logs: Dnevniki
+  section-filters: Filtri
+  section-display: Prikaz
+  section-export: Izvoz
+  section-container: Vsebnik
+  section-image: Slika
   restart: Ponovni zagon
   update: Posodobi
   update-service: Posodobi Storitev
@@ -37,7 +50,20 @@ action:
   see-in-context: Glej v kontekstu
   show-details: Prikaži podrobnosti
   create-alert: Ustvari opozorilo
+  ask-about-log: Vprašaj o tem dnevniku
+log-details:
+  on-std: na {std}
+  image: Slika
+  raw-json: Neobdelan JSON
+  copy: Kopiraj
+  download: Prenesi JSON
+  fields: Polja
+  field: Polje
+  value: Vrednost
+  fields-hint: Povlecite za spremembo vrstnega reda. Preklopite za prikaz ali skritje v toku dnevnikov.
+  toggle-all: Preklopi vsa polja
 label:
+  historical-at: "Zgodovinski dnevniki · {time}"
   containers: Zabojniki
   host-count: Ni Gostiteljev | 1 Gostitelj | {count} Gostiteljev
   service: Ni storitev | 1 storitev | {count} storitev
@@ -50,9 +76,10 @@ label:
   hosts: Gostitelji
   password: Geslo
   username: Uporabniško ime
+  or: ali
   status: Stanje
   created: Ustvarjeno
-  avg-cpu: CPE povprečje (%)
+  avg-cpu: CPE povprečje
   pinned: Pripeto
   per-page: Vrstic na stran
   sort-by: Razvrsti po
@@ -65,6 +92,8 @@ label:
   collapse-all: Strni vse
   collapse-group: Strni skupino
   expand-all: Razširi vse
+  more-options: Več možnosti
+  groups: Skupine
   container-name: Ime zabojnika
   container: Ni zabojnikov | 1 zabojnik | {count} zabojnikov
   alert-events: Ni dogodkov | 1 dogodek | {count} dogodkov
@@ -78,20 +107,28 @@ label:
   event-metric: Metrika
   event-container: Zabojnik
   services: Storitve
-  avg-mem: Povprečje spomina (%)
+  avg-mem: Povprečje spomina
   name: Ime
   cpu: CPU
+  core: Ni jeder | 1 jedro | {count} jeder
   mem: MEM
   no-logs: Zabojnik še nima dnevnika
+  no-logs-hint: "Vse, kar vsebnik zapiše, se takoj pojavi tukaj."
   search-status:
     searching: Iskanje po starejših dnevnikih…
     searching-to: Iskanje po starejših dnevnikih… nazaj do {time}
     capped: "{count} zadetkov · iskano nazaj do {time}"
     exhausted: Preiskani vsi dnevniki · {count} zadetkov
-    empty: Ni zadetkov · preiskani vsi dnevniki
+    empty: "Ni ujemajočih se dnevnikov"
+    empty-hint: "Preiskani vsi dnevniki. Poskusite z drugim izrazom ali počistite iskanje."
 tooltip:
+  live-logs: Ti dnevniki so zamrznjeni na tem trenutku. Kliknite za spremljanje živega toka.
   search: Iskanje zabojnikov (⌘ + k, ⌃k)
   pin-column: Pripni kot stolpec
+  unpin-column: Odpni stolpec
+  merge-stream: Združi s tokom
+  merge-stream-hint: Odprite vsebnik za združevanje
+  unmerge-stream: Odstrani iz toka
   merge-all: Združi vse v en tok
   network-io: "Omrežje: ↑ {tx}/s · ↓ {rx}/s"
   disk-io: "Disk: ↑ {write}/s · ↓ {read}/s"
@@ -117,6 +154,7 @@ error:
   page-not-found: Ta stran ne obstaja
   host-group-not-found: 'V skupini "{name}" ni najdenih gostiteljev'
   invalid-auth: Uporabniško ime ali geslo nista veljavna
+  oauth-failed: Prijava ni uspela. Poskusite znova.
   copy-not-supported: Kopiranje v odložišče ni podprto v vašem brskalniku
   copy-not-supported-hint: Odložišče ni na voljo. Kopirajte spodnjo povezavo
   logs-skipped: Prikaži {total} skritih vnosov
@@ -162,11 +200,13 @@ title:
   settings: Nastavitve
   notifications: Obvestila
 button:
+  live-logs: Pojdi na žive dnevnike
   logout: Odjava
   cancel: Prekliči
   redirect: Preusmeritev
   retry: Poskusi znova
   login: Prijava
+  login-with: Nadaljuj z {provider}
   settings: Nastavitve
   refresh: Osveži
 placeholder:
@@ -283,16 +323,48 @@ analytics:
   export: Izvozi
   export_csv: Prenesi CSV
   export_json: Prenesi JSON
+  query: Poizvedba
+  run: Zaženi
+  results: Rezultati
 drawer:
   maximize: Maksimiraj
   restore: Obnovi
+terminal:
+  connecting: Povezovanje
+  connected: Povezano
+  closed: Prekinjeno
+  connection-closed: Povezava je zaprta
+  not-running: Zabojnik ne teče
+  reconnect: Ponovno poveži
+  attaching: Povezovanje z {name}
+  decrease-font: Zmanjšaj velikost pisave
+  increase-font: Povečaj velikost pisave
+  search: Iskanje
+  no-results: Ni zadetkov
+  previous-match: Prejšnji zadetek
+  next-match: Naslednji zadetek
+  close-search: Zapri iskanje
 notifications:
+  history:
+    title: Dejavnost
+    loading: Nalaganje dejavnosti…
+    failed: Dejavnosti ni bilo mogoče naložiti.
+    empty-unlinked: Opozorila se pokažejo tukaj, ko je ta instanca povezana z Dozzle Cloud. Do takrat se pojavijo v toku dnevnikov in se ob osvežitvi pozabijo.
+    empty: Nedavno se ni sprožilo nič.
+    still-happening: še vedno se dogaja
+    events: "{n} dogodkov"
+    suppressed: "· {n} zadržanih"
+    show-lines: Pokaži mi vrstice
+    show-moment: Pokaži dnevnike okoli
+    open-in-cloud: Odpri v Dozzle Cloud
+    fired-recently: krat nedavno
   title: Obvestila
   description: Nastavite kje in kdaj prejemati opozorila
   destinations: Cilji
   add-destination: Dodaj cilj
   alerts: Opozorila
   add-alert: Dodaj opozorilo
+  new-alerts: Nova opozorila
   prefill-name: Opozorila o napakah
   prefill-expression: level == "error"
   add: Dodaj
@@ -472,13 +544,10 @@ notifications:
     cloud-exists: Dozzle Cloud je že povezan
     link-cloud: Poveži Račun
     link-cloud-button: Poveži Dozzle Cloud
-    cloud-settings-hint: Za nastavitev upravljanih kanalov pojdite na
     cloud-settings-link: Nastavitve Dozzle Cloud
     cloud-checking: Preverjanje stanja oblaka...
     cloud-relink: Vaš API ključ je neveljaven ali potekel. Prosimo, izbrišite in ponovno povežite svoj račun.
     cloud-unavailable: Dozzle Cloud je začasno nedosegljiv. Poskusite znova pozneje.
-    cloud-plan: Načrt
-    cloud-usage: Dogodki v tem obdobju
   empty-state:
     title: Začnite z obvestili
     description: Izberite, kako želite prejemati opozorila, ko vaši zabojniki potrebujejo pozornost.
@@ -490,13 +559,20 @@ notifications:
 cloud:
   title: Dozzle Cloud
   description: Upravljajte svoje zabojnike na daljavo in uporabite UI za preiskovanje težav v vašem grozdu.
+  pitch:
+    findings: Dnevni pregled vaših napak in opozoril z UI
+    alerts: Opozorila v realnem času ob sesutjih in preseženih pragovih
+    control: Zaženite, ustavite in preglejte zabojnike od koder koli
   learn-more: Več o tem
   link-instance: Poveži instanco
   relink-instance: Ponovno poveži instanco
   connected: Povezano
   pro-badge: Dozzle Cloud Pro
+  locked-on-this-plan: Na voljo z Dozzle Cloud Pro
   plan: Načrt
-  usage: Dogodki v tem obdobju
+  usage: Dogodki
+  usage-agent-messages: Klepeti z agentom
+  usage-log-bytes: Indeksirani podatki
   dashboard: Nadzorna plošča
   settings: Nastavitve
   error: Napaka povezave. Prosimo, ponovno povežite svojo instanco.
@@ -504,6 +580,7 @@ cloud:
   unlink: Prekini povezavo
   unlink-confirm: Ali ste prepričani, da želite prekiniti povezavo z Dozzle Cloud? To bo odstranilo vse cilje obvestil v oblaku.
   privacy:
+    details-link: "Kaj se pošilja"
     toggle: "Pretakanje dnevnikov in meritev v Dozzle Cloud"
     sends-heading: "Dokler je to vklopljeno, vaši vsebniki nenehno pošiljajo:"
     sends-logs: "Vrstice dnevnika, takoj ko so zapisane"
@@ -511,7 +588,7 @@ cloud:
     never-heading: "Nikoli ni poslano:"
     never-env: "Spremenljivke okolja"
     off-note: "Izklopite, da dnevniki in meritve ostanejo na tej instanci. Nastavljena opozorila se še vedno dostavljajo, oddaljen dostop do vsebnikov pa še naprej deluje."
-    per-container: "Posamezen vsebnik izključite z oznako: dev.dozzle.cloud.min_level=disabled"
+    per-container: "Ustavite dnevnike posameznega vsebnika z oznako: dev.dozzle.cloud.min_level=disabled"
     required-for: "Potrebno za preiskave z umetno inteligenco, iskanje po dnevnikih in zgodovino virov."
   welcome:
     watching-title: "Cloud spremlja vaše dnevnike, da vam ni treba"
@@ -567,8 +644,63 @@ cloud:
       disk-free: "Nosilec z manj kot 1 GB prostora"
       fatal: "Katerakoli vrstica fatal"
       error: "Katerakoli vrstica error"
+cloud-rail:
+  title: Dozzle Cloud
+  chat: Vprašaj Dozzle
+  metrics: Meritve
+  alerts: Opozorila
+  close: Zapri
+  hide: Skrij oblačno vrstico
+  show: Pokaži oblačno vrstico
+  alerts-empty-here: Za to, kar gledate, se ni sprožilo nič.
+  all-activity: Vsa dejavnost
+  metrics-no-container: Odprite vsebnik, da vidite njegovo zgodovino.
+  metrics-loading: Nalagam zgodovino…
+  metrics-failed: Zgodovine ni bilo mogoče naložiti.
+  metrics-empty: Za to obdobje še ni zapisov.
+  metrics-peak: vrh
+  metrics-bucket: povprečja po {duration}
+  window-1h: 1 h
+  window-6h: 6 h
+  window-24h: 24 h
+  window-7d: 7 d
+cloud-chat:
+  title: Vprašaj Dozzle
+  close: Zapri
+  clear: Počisti klepet
+  empty: Vprašaj o tem, kar gledaš. Pomočnik vidi ta pogled in bere te dnevnike.
+  thinking: Razmišljam…
+  doing:
+    logs: Berem dnevnike…
+    containers: Pregledujem vsebnike…
+    stats: Preverjam porabo virov…
+    inspect: Pregledujem vsebnik…
+    notifications: Preverjam obvestila…
+    action: Izvajam dejanje…
+    working: Delam…
+  placeholder: Vprašaj o teh dnevnikih
+  historical: zgodovinsko
+  n-containers: "Vsebnikov: {n}"
+  evidence: Poslano z vašim vprašanjem
+  lines-in-view: "{n} vidnih vrstic"
+  this-log: Ta vrstica dnevnika
+  remove-log: Odstrani to vrstico dnevnika
+  send: Pošlji
+  suggest-summarize: Povzemi, kaj se dogaja
+  suggest-errors: Poišči napake in opozorila
+  suggest-next: Kaj naj pogledam naslednje?
+  error-unavailable: Pomočnik trenutno ni na voljo.
+  error-not-configured: Dozzle Cloud ni povezan, zato ni pomočnika, ki bi ga vprašali.
+  section-ask: Pomočnik
+  ask-for: Vprašaj Dozzle o {query}
+  ask-hint: Odgovarja iz vsebnikov v pogledu
+  ask-shortcut: za vprašanje
 cloud-search:
   containers-section: "Vsebniki"
+  section-logs: "Dnevniki"
+  no-matches: "Ni ujemajočih se vsebnikov ali ukazov"
+  nav-hint: "krmarjenje"
+  pin-shortcut: "pripni stolpec"
   search-logs-for: 'Iskanje dnevnikov za "{query}"'
   across-containers: "indeksirano po vseh vaših vsebnikih"
   connect-to-enable: "Povežite Dozzle Cloud za iskanje po dnevnikih"
@@ -597,6 +729,8 @@ cloud-search:
   container-removed-pill: "izbrisano"
 command-palette:
   section-commands: Ukazi
+  section-recent: "Nedavno"
+  run-hint: "izvedi ukaz"
   restart-container: Znova zaženi {name}
   stop-container: Ustavi {name}
   start-container: Zaženi {name}

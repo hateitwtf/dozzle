@@ -28,16 +28,42 @@ toolbar:
   attach: Bağla
   copy-permalink: Kalıcı bağlantıyı kopyala
   copy-image: "İmaj etiketini kopyala"
+  pin: "Sabitle"
+  unpin: "Sabitlemeyi kaldır"
   copy-logs: Günlükleri kopyala
   copy-filtered-logs: Filtrelenmiş günlükleri kopyala
   copying-logs: Günlükler kopyalanıyor...
+  streams: Akışlar
+  levels: Seviyeler
+  toggle-all-levels: Tüm seviyeleri değiştir
+  all: Tümü
+  none: Hiçbiri
+  section-logs: Günlükler
+  section-filters: Filtreler
+  section-display: Görünüm
+  section-export: Dışa aktar
+  section-container: Konteyner
+  section-image: İmaj
 action:
   copy-log: Günlüğü kopyala
   copy-link: Kalıcı bağlantıyı kopyala
   see-in-context: Bağlamda gör
   show-details: Detayları göster
   create-alert: Uyarı oluştur
+  ask-about-log: Bu log hakkında sor
+log-details:
+  on-std: "{std} üzerinde"
+  image: İmaj
+  raw-json: Ham JSON
+  copy: Kopyala
+  download: JSON indir
+  fields: Alanlar
+  field: Alan
+  value: Değer
+  fields-hint: Yeniden sıralamak için sürükleyin. Günlük akışında göstermek veya gizlemek için değiştirin.
+  toggle-all: Tüm alanları değiştir
 label:
+  historical-at: "Geçmiş günlükler · {time}"
   containers: Konteynerlar
   container: Konteyner yok | 1 konteyner | {count} konteyner
   alert-events: Olay yok | 1 olay | {count} olay
@@ -62,13 +88,15 @@ label:
   hosts: Sunucular
   password: Şifre
   username: Kullanıcı Adı
+  or: veya
   container-name: Konteyner Adı
   status: Durum
   created: Oluşturulma
-  avg-cpu: Ort. CPU (%)
-  avg-mem: Ort. Bellek (%)
+  avg-cpu: Ort. CPU
+  avg-mem: Ort. Bellek
   name: Ad
   cpu: CPU
+  core: Çekirdek yok | 1 çekirdek | {count} çekirdek
   mem: MEM
   pinned: Sabitlenmiş
   per-page: Sayfa başına satır
@@ -79,19 +107,28 @@ label:
   k8s-menu: Kubernetes
   group-menu: Özel Gruplar
   no-logs: Konteyner henüz log içermiyor
+  no-logs-hint: "Konteynerin yazdığı her şey anında burada görünür."
   search-status:
     searching: Eski loglar aranıyor…
     searching-to: Eski loglar aranıyor… {time} tarihine kadar
     capped: "{count} eşleşme · {time} tarihine kadar arandı"
     exhausted: Tüm loglar arandı · {count} eşleşme
-    empty: Eşleşme yok · tüm loglar arandı
+    empty: "Eşleşen log yok"
+    empty-hint: "Tüm loglar arandı. Farklı bir terim deneyin veya aramayı temizleyin."
   show-all-containers: Tüm konteynerleri göster
   collapse-all: Hepsini daralt
   collapse-group: Grubu daralt
   expand-all: Hepsini genişlet
+  more-options: Diğer seçenekler
+  groups: Gruplar
 tooltip:
+  live-logs: Bu günlükler bu ana sabitlenmiştir. Canlı akışı izlemek için tıklayın.
   search: Konteynerlerde ara (⌘ + k, ⌃k)
   pin-column: Sütun olarak sabitle
+  unpin-column: Sütun sabitlemesini kaldır
+  merge-stream: Akışa birleştir
+  merge-stream-hint: Birleştirmek için bir konteyner açın
+  unmerge-stream: Akıştan çıkar
   merge-all: Tümünü tek bir akışta birleştir
   network-io: "Ağ: ↑ {tx}/sn · ↓ {rx}/sn"
   disk-io: "Disk: ↑ {write}/sn · ↓ {read}/sn"
@@ -117,6 +154,7 @@ error:
   page-not-found: Bu sayfa bulunamadı
   host-group-not-found: '"{name}" grubunda ana bilgisayar bulunamadı'
   invalid-auth: Kullanıcı adı veya şifre geçersiz
+  oauth-failed: Giriş başarısız oldu. Lütfen tekrar deneyin.
   copy-not-supported: Panoya kopyalama tarayıcınızda desteklenmiyor
   copy-not-supported-hint: Pano kullanılamıyor. Aşağıdaki bağlantıyı kopyalayın
   logs-skipped: "{total} gizli girişi göster"
@@ -163,8 +201,10 @@ title:
   settings: Ayarlar
   notifications: Bildirimler
 button:
+  live-logs: Canlı günlüklere git
   logout: Çıkış Yap
   login: Giriş Yap
+  login-with: "{provider} ile devam et"
   settings: Ayarlar
   cancel: İptal
   redirect: Yönlendir
@@ -281,16 +321,48 @@ analytics:
   export: Dışa aktar
   export_csv: CSV indir
   export_json: JSON indir
+  query: Sorgu
+  run: Çalıştır
+  results: Sonuçlar
 drawer:
   maximize: Büyüt
   restore: Geri yükle
+terminal:
+  connecting: Bağlanıyor
+  connected: Bağlandı
+  closed: Bağlantı kesildi
+  connection-closed: Bağlantı kapandı
+  not-running: Konteyner çalışmıyor
+  reconnect: Yeniden bağlan
+  attaching: "{name} konteynerine bağlanılıyor"
+  decrease-font: Yazı tipi boyutunu küçült
+  increase-font: Yazı tipi boyutunu büyüt
+  search: Ara
+  no-results: Sonuç yok
+  previous-match: Önceki eşleşme
+  next-match: Sonraki eşleşme
+  close-search: Aramayı kapat
 notifications:
+  history:
+    title: Etkinlik
+    loading: Etkinlik yükleniyor…
+    failed: Etkinlik yüklenemedi.
+    empty-unlinked: Bu örnek Dozzle Cloud'a bağlandığında uyarılar burada görünür. O zamana kadar yalnızca log akışında geçer ve sayfa yenilenince kaybolur.
+    empty: Son zamanlarda hiçbir şey tetiklenmedi.
+    still-happening: hâlâ sürüyor
+    events: "{n} olay"
+    suppressed: "· {n} bastırıldı"
+    show-lines: Satırları göster
+    show-moment: O andaki günlükleri göster
+    open-in-cloud: Dozzle Cloud'da aç
+    fired-recently: kez son zamanlarda
   title: Bildirimler
   description: Uyarıları nerede ve ne zaman alacağınızı yapılandırın
   destinations: Hedefler
   add-destination: Hedef ekle
   alerts: Uyarılar
   add-alert: Uyarı ekle
+  new-alerts: Yeni uyarılar
   prefill-name: Hata uyarıları
   prefill-expression: level == "error"
   add: Ekle
@@ -470,13 +542,10 @@ notifications:
     cloud-exists: Dozzle Cloud zaten bağlı
     link-cloud: Hesabı Bağla
     link-cloud-button: Dozzle Cloud'u Bağla
-    cloud-settings-hint: Yönetilen kanallarınızı yapılandırmak için şuraya gidin
     cloud-settings-link: Dozzle Cloud Ayarları
     cloud-checking: Bulut durumu kontrol ediliyor...
     cloud-relink: API anahtarınız geçersiz veya süresi dolmuş. Lütfen silin ve hesabınızı tekrar bağlayın.
     cloud-unavailable: Dozzle Cloud geçici olarak kullanılamıyor. Lütfen daha sonra tekrar deneyin.
-    cloud-plan: Plan
-    cloud-usage: Bu dönemdeki olaylar
   empty-state:
     title: Bildirimlerle başlayın
     description: Konteynerleriniz dikkat gerektirdiğinde nasıl uyarı almak istediğinizi seçin.
@@ -488,13 +557,20 @@ notifications:
 cloud:
   title: Dozzle Cloud
   description: Konteynerlerinizi uzaktan kontrol edin ve kümenizde sorunları araştırmak için yapay zeka kullanın.
+  pitch:
+    findings: Hatalarınızın ve uyarılarınızın günlük yapay zeka taraması
+    alerts: Çökmeler ve eşik aşımları için gerçek zamanlı uyarılar
+    control: Konteynerleri her yerden başlatın, durdurun ve inceleyin
   learn-more: Daha fazla bilgi
   link-instance: Örneği bağla
   relink-instance: Örneği yeniden bağla
   connected: Bağlı
   pro-badge: Dozzle Cloud Pro
+  locked-on-this-plan: Dozzle Cloud Pro ile kullanılabilir
   plan: Plan
-  usage: Bu dönemdeki olaylar
+  usage: Olaylar
+  usage-agent-messages: Aracı sohbetleri
+  usage-log-bytes: Dizine eklenen veri
   dashboard: Pano
   settings: Ayarlar
   error: Bağlantı hatası. Lütfen örneğinizi yeniden bağlayın.
@@ -502,6 +578,7 @@ cloud:
   unlink: Bağlantıyı kaldır
   unlink-confirm: Dozzle Cloud bağlantısını kaldırmak istediğinizden emin misiniz? Bu, tüm bulut bildirim hedeflerini kaldıracaktır.
   privacy:
+    details-link: "Neler gönderiliyor"
     toggle: "Günlükleri ve metrikleri Dozzle Cloud'a yayınla"
     sends-heading: "Bu açıkken konteynerleriniz sürekli olarak şunları gönderir:"
     sends-logs: "Yazıldıkça günlük satırları"
@@ -509,7 +586,7 @@ cloud:
     never-heading: "Asla gönderilmez:"
     never-env: "Ortam değişkenleri"
     off-note: "Günlükleri ve metrikleri bu örnekte tutmak için bunu kapatın. Kurduğunuz uyarılar yine iletilir ve uzaktan konteyner erişimi çalışmaya devam eder."
-    per-container: "Tek bir konteyneri şu etiketle hariç tutun: dev.dozzle.cloud.min_level=disabled"
+    per-container: "Tek bir konteynerin günlüklerini şu etiketle durdurun: dev.dozzle.cloud.min_level=disabled"
     required-for: "Yapay zeka incelemeleri, günlük araması ve kaynak geçmişi için gereklidir."
   welcome:
     watching-title: "Cloud loglarınızı sizin yerinize izler"
@@ -565,8 +642,63 @@ cloud:
       disk-free: "Biriminde 1 GB'tan az boş alan"
       fatal: "Herhangi bir fatal satırı"
       error: "Herhangi bir error satırı"
+cloud-rail:
+  title: Dozzle Cloud
+  chat: Dozzle'a sor
+  metrics: Metrikler
+  alerts: Uyarılar
+  close: Kapat
+  hide: Cloud çubuğunu gizle
+  show: Cloud çubuğunu göster
+  alerts-empty-here: Baktığınız şey için hiçbir şey tetiklenmedi.
+  all-activity: Tüm etkinlik
+  metrics-no-container: Geçmişi görmek için bir konteyner açın.
+  metrics-loading: Geçmiş yükleniyor…
+  metrics-failed: Geçmiş yüklenemedi.
+  metrics-empty: Bu aralık için henüz kayıt yok.
+  metrics-peak: tepe
+  metrics-bucket: "{duration} ortalamaları"
+  window-1h: 1 sa
+  window-6h: 6 sa
+  window-24h: 24 sa
+  window-7d: 7 g
+cloud-chat:
+  title: Dozzle'a sor
+  close: Kapat
+  clear: Sohbeti temizle
+  empty: Baktığın şeyi sor. Asistan bu görünümü görüyor ve bu logları okuyor.
+  thinking: Düşünüyor…
+  doing:
+    logs: Loglar okunuyor…
+    containers: Konteynerlere bakılıyor…
+    stats: Kaynak kullanımı kontrol ediliyor…
+    inspect: Konteyner inceleniyor…
+    notifications: Bildirimler kontrol ediliyor…
+    action: İşlem çalıştırılıyor…
+    working: Çalışıyor…
+  placeholder: Bu loglar hakkında sor
+  historical: geçmiş
+  n-containers: "{n} konteyner"
+  evidence: Sorunuzla birlikte gönderilir
+  lines-in-view: görünen {n} satır
+  this-log: Bu log satırı
+  remove-log: Bu log satırını kaldır
+  send: Gönder
+  suggest-summarize: Neler olduğunu özetle
+  suggest-errors: Hataları ve uyarıları bul
+  suggest-next: Sırada neye bakmalıyım?
+  error-unavailable: Asistan şu anda kullanılamıyor.
+  error-not-configured: Dozzle Cloud bağlı değil, bu yüzden soru sorulacak bir asistan yok.
+  section-ask: Asistan
+  ask-for: "{query} hakkında Dozzle'a sor"
+  ask-hint: Görünen konteynerlere bakarak yanıtlar
+  ask-shortcut: sormak için
 cloud-search:
   containers-section: "Konteynerler"
+  section-logs: "Loglar"
+  no-matches: "Eşleşen konteyner veya komut yok"
+  nav-hint: "gezin"
+  pin-shortcut: "sütunu sabitle"
   search-logs-for: '"{query}" için logları ara'
   across-containers: "tüm konteynerleriniz arasında indekslenmiş"
   connect-to-enable: "Logları aramak için Dozzle Cloud'a bağlanın"
@@ -595,6 +727,8 @@ cloud-search:
   container-removed-pill: "silindi"
 command-palette:
   section-commands: Komutlar
+  section-recent: "Son kullanılanlar"
+  run-hint: "komutu çalıştır"
   restart-container: "{name} yeniden başlat"
   stop-container: "{name} durdur"
   start-container: "{name} başlat"

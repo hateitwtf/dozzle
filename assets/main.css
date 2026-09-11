@@ -19,8 +19,15 @@
     "Liberation Mono", monospace;
 }
 
+/* Sets padding-top outright, and is emitted after the core spacing utilities, so
+ * it BEATS `pt-*`/`py-*` on the same element and collapses the padding to 0 where
+ * there is no inset. Put it on a wrapper instead of next to a padding utility. */
 @utility pt-safe {
   padding-top: env(safe-area-inset-top);
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 @custom-variant max-h-500 {
@@ -173,6 +180,28 @@
   }
 }
 
+/* --- Sidebar navigation -------------------------------------------------
+ * One vocabulary shared by every nav flavour (hosts, swarm, k8s, custom
+ * groups) so the sidebar reads as one surface no matter which mode Dozzle is
+ * running in. Kept here rather than in scoped blocks because four menu
+ * components and the mobile drawer all draw from it. */
+
+/* Small square affordance for the icon-only controls that live in the sidebar
+ * chrome: back, merge-all, overflow. Pair with `icon-btn` for the press/hover
+ * spring the rest of the app uses. */
+@utility nav-btn {
+  @apply text-base-content/50 hover:bg-base-content/10 hover:text-base-content inline-flex size-6 shrink-0 items-center justify-center rounded-md transition-colors;
+}
+
+/* A row inside a sidebar overflow dropdown. */
+@utility nav-menu-item {
+  @apply hover:bg-base-300 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors;
+}
+
+@utility nav-menu-panel {
+  @apply rounded-box border-base-content/15 bg-base-200 w-56 border p-1.5 shadow-lg;
+}
+
 @utility animate-bounce-fast {
   animation: bounce 0.5s 2 both;
 }
@@ -182,6 +211,65 @@
 }
 
 @layer base {
+  /* One pointer cursor for the whole app.
+   *
+   * Tailwind v4's preflight sets `cursor: default` on buttons, so every control
+   * read as painted on unless it remembered to opt back in, and each new one
+   * had to rediscover that. Anchors with an href already get this from the UA;
+   * this covers the elements the reset takes it away from, plus the handful of
+   * things that behave like buttons without being one.
+   *
+   * Disabled controls are excluded so a dead button still looks dead. */
+  button:not(:disabled),
+  summary,
+  select:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  .btn:not(.btn-disabled, :disabled),
+  label:has(> input[type="checkbox"], > input[type="radio"]) {
+    cursor: pointer;
+  }
+
+  /* One focus ring for the whole app.
+   *
+   * The UA default is a hard blue that belongs to no theme, and on a nav row
+   * already tinted for the active route a second, differently coloured box
+   * around it reads as a second kind of selection rather than as focus.
+   *
+   * Neutral on purpose: an accent ring would be the same colour the active row
+   * is already wearing, which is exactly the confusion being fixed. */
+  :focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--color-base-content) 40%, transparent);
+    outline-offset: 1px;
+  }
+
+  /* Popover panels come with UA chrome (a border, padding, centering inset) meant for a
+   * standalone dialog. Resetting it in the base layer lets a component's own utilities style
+   * the panel without fighting the reset for source order. */
+  .popover-panel {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    border: 0 solid;
+    padding: 0;
+    overflow: visible;
+    width: auto;
+    height: auto;
+    max-width: calc(100vw - 1rem);
+    background: none;
+    color: inherit;
+    /* The top layer decides where a panel PAINTS, not what it inherits: the element is still
+     * a child of whatever triggered it. A panel hung off a table cell inherited daisyUI's
+     * `white-space: nowrap` and ran its prose straight out the side of its own box. */
+    white-space: normal;
+  }
+
+  /* What `.dropdown` used to be: a box that wraps a trigger without changing its layout.
+   * It stays positioned because triggers hang badges and status dots off it. */
+  .popover-anchor {
+    position: relative;
+    display: inline-block;
+  }
+
   @media screen and (max-device-width: 480px) {
     body {
       -webkit-text-size-adjust: 100%;
@@ -224,8 +312,12 @@ body {
 }
 
 /* CodeMirror autocomplete tooltip styles */
+/* `min-w-96` is 384px, which is wider than the phones the rule editor is opened
+ * on, so the floor gives way to the viewport before it pushes the page sideways. */
 .cm-tooltip {
-  @apply bg-base-200! border-base-content/40! min-w-96 rounded-sm border shadow-md;
+  @apply bg-base-200! border-base-content/40! rounded-sm border shadow-md;
+  min-width: min(24rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
 }
 
 .cm-tooltip-autocomplete ul {
@@ -312,12 +404,6 @@ body {
   transition-property: transform, rotate, scale, translate, opacity;
   transition-duration: 200ms;
   transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.btn-circle,
-.btn-square,
-.icon-btn {
-  @apply cursor-pointer;
 }
 
 :is(.btn-circle, .btn-square, .icon-btn):hover :where(svg, img) {

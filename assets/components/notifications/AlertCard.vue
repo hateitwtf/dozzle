@@ -1,0 +1,270 @@
+<template>
+  <div
+    class="card bg-base-100 shadow-sm"
+    :class="{ 'opacity-60': !alert.enabled, 'highlight-new': isHighlighted }"
+    @animationend="isHighlighted = false"
+  >
+    <div class="card-body gap-3 p-4">
+      <!-- Header -->
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex min-w-0 flex-wrap items-center gap-2">
+          <h4 class="flex min-w-0 flex-wrap items-center gap-2 text-lg font-semibold">
+            <mdi:chart-line v-if="alert.metricExpression" class="text-info shrink-0" />
+            <mdi:bell-ring-outline v-else-if="alert.eventExpression" class="text-info shrink-0" />
+            <mdi:text-box-outline v-else class="text-info shrink-0" />
+            <span class="break-all">{{ alert.name }}</span> <span class="text-sm font-light">→</span>
+            <Popover class="group/dispatch" hover panel-class="bg-base-200 rounded-box w-48 p-2 shadow-lg">
+              <template #trigger>
+                <button
+                  type="button"
+                  class="border-base-content/0 hover:border-base-content/20 flex cursor-pointer items-center gap-1 rounded border px-1.5 py-0.5 text-xs font-light transition-colors"
+                  :class="{ 'text-warning': !alert.dispatcher }"
+                >
+                  <template v-if="alert.dispatcher">
+                    <mdi:webhook v-if="alert.dispatcher.type === 'webhook'" />
+                    <mdi:cloud v-else />
+                    {{ alert.dispatcher.name }}
+                  </template>
+                  <template v-else>
+                    <mdi:alert-outline />
+                    {{ $t("notifications.alert.dispatcher-deleted") }}
+                  </template>
+                  <mdi:chevron-down
+                    class="text-[0.6rem] opacity-0 transition-opacity group-hover/dispatch:opacity-100"
+                  />
+                </button>
+              </template>
+              <ul class="menu w-full p-0">
+                <li v-for="dest in dispatchers" :key="dest.id">
+                  <a
+                    class="flex items-center gap-2"
+                    :class="{ active: dest.id === alert.dispatcher?.id }"
+                    @click="changeDispatcher(dest.id)"
+                  >
+                    <mdi:webhook v-if="dest.type === 'webhook'" />
+                    <mdi:cloud v-else />
+                    {{ dest.name }}
+                  </a>
+                </li>
+              </ul>
+            </Popover>
+          </h4>
+          <span v-if="!alert.enabled" class="badge badge-warning badge-sm">{{ $t("notifications.alert.paused") }}</span>
+        </div>
+        <input
+          type="checkbox"
+          class="toggle toggle-primary shrink-0"
+          :checked="alert.enabled"
+          @change="toggleEnabled"
+        />
+      </div>
+
+      <!-- Only the rule itself lives here: which containers, and what fires it. A fixed label
+           column keeps the chips on the same line across every card, which an `auto` column
+           could not do since each card sized it to its own longest label. The value column is
+           `1fr` so long expressions wrap, but each chip is w-fit so a short one doesn't stretch
+           a full-width bar across the card. -->
+      <div class="text-base-content/60 grid grid-cols-[minmax(0,7rem)_1fr] items-center gap-x-3 gap-y-2 text-sm">
+        <span>{{ $t("notifications.alert.containers") }}</span>
+        <code class="bg-base-200 text-base-content w-fit max-w-full rounded px-2 py-0.5 font-mono break-all">{{
+          alert.containerExpression
+        }}</code>
+        <template v-if="alert.metricExpression">
+          <span>{{ $t("notifications.alert.metric-filter") }}</span>
+          <code class="bg-base-200 text-base-content w-fit max-w-full rounded px-2 py-0.5 font-mono break-all">{{
+            alert.metricExpression
+          }}</code>
+        </template>
+        <template v-else-if="alert.eventExpression">
+          <span>{{ $t("notifications.alert.event-filter") }}</span>
+          <code class="bg-base-200 text-base-content w-fit max-w-full rounded px-2 py-0.5 font-mono break-all">{{
+            alert.eventExpression
+          }}</code>
+        </template>
+        <template v-else>
+          <span>{{ $t("notifications.alert.log-filter") }}</span>
+          <code class="bg-base-200 text-base-content w-fit max-w-full rounded px-2 py-0.5 font-mono break-all">{{
+            alert.logExpression
+          }}</code>
+        </template>
+      </div>
+
+      <!-- Footer -->
+      <div
+        class="border-base-content/10 text-base-content/80 flex items-center justify-between gap-2 border-t pt-3 text-xs"
+      >
+        <!-- These are firing counts, not match counts. "0 containers" next to a filter that
+             clearly matches something read as "this alert matches nothing". -->
+        <div class="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1">
+          <template v-if="confirmingDelete">
+            <span class="text-base-content">{{ $t("notifications.alert.delete-warning") }}</span>
+          </template>
+          <template v-else>
+            <span v-if="!alert.triggerCount">{{ $t("notifications.alert.never-triggered") }}</span>
+            <template v-else>
+              <span>{{ $t("notifications.alert.triggered-count", alert.triggerCount) }}</span>
+              <span>{{ $t("notifications.alert.containers-count", alert.triggeredContainers) }}</span>
+              <span v-if="alert.lastTriggeredAt">
+                {{ $t("notifications.alert.last-triggered", { time: formatTimeAgo(alert.lastTriggeredAt) }) }}
+              </span>
+            </template>
+            <!-- Timing is how the rule is tuned, not what it matches, so it sits with the other
+                 metadata instead of competing with the expressions above. -->
+            <span v-if="alert.metricExpression">
+              {{
+                $t("notifications.alert.window-meta", {
+                  duration: formatDuration(alert.sampleWindow || 15, locale || undefined),
+                })
+              }}
+            </span>
+            <span v-if="cooldownSeconds">
+              {{
+                $t("notifications.alert.cooldown-meta", {
+                  duration: formatDuration(cooldownSeconds, locale || undefined),
+                })
+              }}
+            </span>
+          </template>
+        </div>
+        <!-- Deleting an alert is not undoable and there is no trash to restore it from. -->
+        <div v-if="confirmingDelete" class="flex shrink-0 items-center gap-2">
+          <button class="btn btn-xs" :disabled="isDeleting" @click="confirmingDelete = false">
+            {{ $t("notifications.alert.delete-cancel") }}
+          </button>
+          <button class="btn btn-xs btn-error" :disabled="isDeleting" @click="deleteAlert">
+            <span v-if="isDeleting" class="loading loading-spinner loading-xs"></span>
+            {{ $t("notifications.alert.delete-confirm") }}
+          </button>
+        </div>
+        <div v-else class="flex shrink-0 items-center gap-1">
+          <button
+            class="btn btn-ghost btn-square"
+            :aria-label="$t('notifications.destination.edit')"
+            @click="editAlert"
+          >
+            <mdi:pencil-outline />
+          </button>
+          <button
+            class="btn btn-ghost btn-square"
+            :aria-label="$t('notifications.alert.delete-confirm')"
+            @click="confirmingDelete = true"
+          >
+            <mdi:trash-can-outline />
+          </button>
+        </div>
+      </div>
+
+      <!--
+        What this rule actually did. A rule editor with no record of its own
+        firings can only ever be configuration; this is the half a local webhook
+        cannot have, because nothing remembers a fire-and-forget POST.
+      -->
+      <div v-if="linked && firings.length" class="border-base-content/10 flex items-center gap-2 border-t pt-3">
+        <mdi:history class="text-base-content/40 size-3.5 shrink-0" />
+        <span class="text-base-content/60 text-xs">
+          <span class="font-mono font-semibold">{{ firings.length }}</span>
+          {{ $t("notifications.history.fired-recently") }}
+        </span>
+        <RelativeTime v-if="lastFired" :date="lastFired" class="text-base-content/40 ml-auto font-mono text-xs" />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script lang="ts" setup>
+import type { Dispatcher, NotificationRule } from "@/types/notifications";
+import AlertForm from "./AlertForm.vue";
+
+const { linked } = useCloudSurface();
+const { forSubscription, fetchRecentAlerts } = useRecentAlerts();
+
+const { alert, dispatchers, onUpdated, highlight } = defineProps<{
+  alert: NotificationRule;
+  dispatchers: Dispatcher[];
+  onUpdated?: () => void;
+  highlight?: boolean;
+}>();
+
+// Shared fetch: every card on the page reads the same rows.
+onMounted(() => fetchRecentAlerts());
+const firings = forSubscription(alert.id);
+const lastFired = computed(() => (firings.value.length ? new Date(firings.value[0].ts / 1e6) : undefined));
+
+// Log alerts have no cooldown, metric alerts default to 5m, events only have one when set.
+const cooldownSeconds = computed(() => {
+  if (alert.metricExpression) return alert.cooldown || 300;
+  if (alert.eventExpression) return alert.cooldown || 0;
+  return 0;
+});
+
+const isHighlighted = ref(highlight ?? false);
+watch(
+  () => highlight,
+  (v) => {
+    if (v) isHighlighted.value = true;
+  },
+);
+
+const { t } = useI18n();
+const { showToast } = useToast();
+const showDrawer = useDrawer();
+const isDeleting = ref(false);
+const confirmingDelete = ref(false);
+
+async function changeDispatcher(id: number) {
+  await fetch(withBase(`/api/notifications/rules/${alert.id}`), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dispatcherId: id }),
+  });
+  onUpdated?.();
+}
+
+function formatTimeAgo(dateStr: string): string {
+  const date = new Date(dateStr);
+  if (date.getFullYear() === 0) return "-";
+  return toRelativeTime(date, undefined);
+}
+
+async function toggleEnabled() {
+  await fetch(withBase(`/api/notifications/rules/${alert.id}`), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ enabled: !alert.enabled }),
+  });
+  onUpdated?.();
+}
+
+function editAlert() {
+  showDrawer(AlertForm, { alert, onCreated: onUpdated }, "lg");
+}
+
+async function deleteAlert() {
+  isDeleting.value = true;
+  try {
+    const res = await fetch(withBase(`/api/notifications/rules/${alert.id}`), { method: "DELETE" });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? res.statusText);
+    confirmingDelete.value = false;
+    onUpdated?.();
+  } catch (e) {
+    showToast({ type: "error", message: e instanceof Error ? e.message : t("error.something-went-wrong") });
+  } finally {
+    isDeleting.value = false;
+  }
+}
+</script>
+
+<style scoped>
+.card.highlight-new {
+  animation: highlight-fade 3s ease-out;
+}
+
+@keyframes highlight-fade {
+  from {
+    background-color: oklch(from var(--color-secondary) l c h / 0.25);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+</style>

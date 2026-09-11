@@ -28,16 +28,42 @@ toolbar:
   attach: Tilknyt
   copy-permalink: Kopiér permanent link
   copy-image: "Kopiér image-tag"
+  pin: "Fastgør"
+  unpin: "Frigør"
   copy-logs: Kopiér logs
   copy-filtered-logs: Kopiér filtrerede logs
   copying-logs: Kopierer logs...
+  streams: Streams
+  levels: Niveauer
+  toggle-all-levels: Slå alle niveauer til/fra
+  all: Alle
+  none: Ingen
+  section-logs: Logs
+  section-filters: Filtre
+  section-display: Visning
+  section-export: Eksport
+  section-container: Container
+  section-image: Image
 action:
   copy-log: Kopier log
   copy-link: Kopier permalink
   see-in-context: Se i kontekst
   show-details: Vis detaljer
   create-alert: Opret advarsel
+  ask-about-log: Spørg om denne log
+log-details:
+  on-std: på {std}
+  image: Billede
+  raw-json: Rå JSON
+  copy: Kopiér
+  download: Download JSON
+  fields: Felter
+  field: Felt
+  value: Værdi
+  fields-hint: Træk for at ændre rækkefølgen. Slå til eller fra for at vise eller skjule i logstrømmen.
+  toggle-all: Slå alle felter til eller fra
 label:
+  historical-at: "Historiske logs · {time}"
   containers: Containere
   container: Ingen containere | 1 container | {count} containere
   alert-events: Ingen hændelser | 1 hændelse | {count} hændelser
@@ -62,13 +88,15 @@ label:
   hosts: Værter
   password: Kodeord
   username: Brugernavn
+  or: eller
   container-name: Container Navn
   status: Status
   created: Lavet
-  avg-cpu: Gns. CPU (%)
-  avg-mem: Gns. MEM (%)
+  avg-cpu: Gns. CPU
+  avg-mem: Gns. hukommelse
   name: Navn
   cpu: CPU
+  core: Ingen kerner | 1 kerne | {count} kerner
   mem: MEM
   pinned: Fastgjort
   per-page: Rækker per side
@@ -79,19 +107,28 @@ label:
   k8s-menu: Kubernetes
   group-menu: Brugerdefinerede Grupper
   no-logs: Container har ingen logs endnu
+  no-logs-hint: "Alt hvad containeren skriver, vises her med det samme."
   search-status:
     searching: Søger i ældre logs…
     searching-to: Søger i ældre logs… tilbage til {time}
     capped: "{count} match · søgt tilbage til {time}"
     exhausted: Søgt i alle logs · {count} match
-    empty: Ingen match · søgt i alle logs
+    empty: "Ingen matchende logs"
+    empty-hint: "Søgte i alle logs. Prøv et andet søgeord, eller ryd søgningen."
   show-all-containers: Vis alle containere
   collapse-all: Kollaps alle
   collapse-group: Kollaps gruppe
   expand-all: Udvid alle
+  more-options: Flere valgmuligheder
+  groups: Grupper
 tooltip:
+  live-logs: Disse logs er frosset på dette tidspunkt. Klik for at følge live-streamen.
   search: Søg containere (⌘ + k, ⌃k)
   pin-column: Fastgør som kolonne
+  unpin-column: Frigør kolonne
+  merge-stream: Flet ind i strømmen
+  merge-stream-hint: Åbn en container for at flette med den
+  unmerge-stream: Fjern fra strømmen
   merge-all: Sammenlæg alt i én stream
   network-io: "Netværk: ↑ {tx}/s · ↓ {rx}/s"
   disk-io: "Disk: ↑ {write}/s · ↓ {read}/s"
@@ -117,6 +154,7 @@ error:
   page-not-found: Denne side eksisterer ikke
   host-group-not-found: 'Ingen værter fundet i gruppen "{name}"'
   invalid-auth: Brugernavn eller kodeord er ikke gyldig
+  oauth-failed: Login mislykkedes. Prøv igen.
   copy-not-supported: Kopiering til udklipsholder understøttes ikke i din browser
   copy-not-supported-hint: Udklipsholder ikke tilgængelig. Kopiér linket nedenfor
   logs-skipped: Vis {total} skjulte indtastninger
@@ -160,8 +198,10 @@ title:
   settings: Indstillinger
   notifications: Notifikationer
 button:
+  live-logs: Gå til live-logs
   logout: Logout
   login: Login
+  login-with: Fortsæt med {provider}
   settings: Indstillinger
   cancel: Annuller
   redirect: Omdiriger
@@ -277,16 +317,48 @@ analytics:
   export: Eksporter
   export_csv: Download CSV
   export_json: Download JSON
+  query: Forespørgsel
+  run: Kør
+  results: Resultater
 drawer:
   maximize: Maksimer
   restore: Gendan
+terminal:
+  connecting: Forbinder
+  connected: Forbundet
+  closed: Afbrudt
+  connection-closed: Forbindelsen blev lukket
+  not-running: Containeren kører ikke
+  reconnect: Forbind igen
+  attaching: Tilslutter til {name}
+  decrease-font: Formindsk skriftstørrelse
+  increase-font: Forøg skriftstørrelse
+  search: Søg
+  no-results: Ingen resultater
+  previous-match: Forrige match
+  next-match: Næste match
+  close-search: Luk søgning
 notifications:
+  history:
+    title: Aktivitet
+    loading: Indlæser aktivitet…
+    failed: Kunne ikke indlæse aktivitet.
+    empty-unlinked: Alarmer vises her, når denne instans er forbundet til Dozzle Cloud. Indtil da optræder de i logstrømmen og glemmes ved genindlæsning.
+    empty: Intet er udløst nyligt.
+    still-happening: sker stadig
+    events: "{n} hændelser"
+    suppressed: "· {n} undertrykt"
+    show-lines: Vis mig linjerne
+    show-moment: Vis loggen omkring det
+    open-in-cloud: Åbn i Dozzle Cloud
+    fired-recently: gange nyligt
   title: Notifikationer
   description: Konfigurer hvor og hvornår du vil modtage alarmer
   destinations: Destinationer
   add-destination: Tilføj destination
   alerts: Alarmer
   add-alert: Tilføj alarm
+  new-alerts: Nye advarsler
   prefill-name: Fejlalarmer
   prefill-expression: level == "error"
   add: Tilføj
@@ -466,13 +538,10 @@ notifications:
     cloud-exists: Dozzle Cloud er allerede tilknyttet
     link-cloud: Link Konto
     link-cloud-button: Link Dozzle Cloud
-    cloud-settings-hint: For at konfigurere dine administrerede kanaler, gå til
     cloud-settings-link: Dozzle Cloud Indstillinger
     cloud-checking: Kontrollerer cloud-status...
     cloud-relink: Din API-nøgle er ugyldig eller udløbet. Slet venligst og link din konto igen.
     cloud-unavailable: Dozzle Cloud er midlertidigt utilgængelig. Prøv igen senere.
-    cloud-plan: Plan
-    cloud-usage: Begivenheder i denne periode
   empty-state:
     title: Kom i gang med notifikationer
     description: Vælg hvordan du vil modtage alarmer, når dine containere kræver opmærksomhed.
@@ -484,13 +553,20 @@ notifications:
 cloud:
   title: Dozzle Cloud
   description: Styr dine containere eksternt og brug AI til at undersøge problemer på tværs af din klynge.
+  pitch:
+    findings: Daglig AI-scanning af dine fejl og advarsler
+    alerts: Realtidsalarmer ved nedbrud og grænseværdier
+    control: Start, stop og inspicér containere hvor som helst
   learn-more: Læs mere
   link-instance: Tilknyt instans
   relink-instance: Gentilknyt instans
   connected: Tilsluttet
   pro-badge: Dozzle Cloud Pro
+  locked-on-this-plan: Tilgængelig med Dozzle Cloud Pro
   plan: Plan
-  usage: Begivenheder i denne periode
+  usage: Begivenheder
+  usage-agent-messages: Agent-chats
+  usage-log-bytes: Indekseret data
   dashboard: Dashboard
   settings: Indstillinger
   error: Forbindelsesfejl. Gentilknyt venligst din instans.
@@ -498,6 +574,7 @@ cloud:
   unlink: Fjern tilknytning
   unlink-confirm: Er du sikker på, at du vil fjerne tilknytningen til Dozzle Cloud? Dette fjerner alle cloud-notifikationsdestinationer.
   privacy:
+    details-link: "Hvad der sendes"
     toggle: "Stream logs og metrikker til Dozzle Cloud"
     sends-heading: "Så længe dette er slået til, sender dine containere løbende:"
     sends-logs: "Loglinjer, efterhånden som de skrives"
@@ -505,7 +582,7 @@ cloud:
     never-heading: "Sendes aldrig:"
     never-env: "Miljøvariabler"
     off-note: "Slå dette fra for at holde logs og metrikker på denne instans. Alarmer, du har opsat, leveres stadig, og fjernadgang til containere fungerer fortsat."
-    per-container: "Udelad en enkelt container med labelet: dev.dozzle.cloud.min_level=disabled"
+    per-container: "Stop en enkelt containers logs med labelet: dev.dozzle.cloud.min_level=disabled"
     required-for: "Påkrævet for AI-undersøgelser, logsøgning og ressourcehistorik."
   welcome:
     watching-title: "Cloud holder øje med dine logs, så du slipper"
@@ -561,8 +638,63 @@ cloud:
       disk-free: "Volume med under 1 GB fri"
       fatal: "Enhver fatal-linje"
       error: "Enhver error-linje"
+cloud-rail:
+  title: Dozzle Cloud
+  chat: Spørg Dozzle
+  metrics: Metrikker
+  alerts: Advarsler
+  close: Luk
+  hide: Skjul cloud-panelet
+  show: Vis cloud-panelet
+  alerts-empty-here: Intet er udløst for det, du kigger på.
+  all-activity: Al aktivitet
+  metrics-no-container: Åbn en container for at se dens historik.
+  metrics-loading: Indlæser historik…
+  metrics-failed: Kunne ikke indlæse historikken.
+  metrics-empty: Intet registreret for dette vindue endnu.
+  metrics-peak: top
+  metrics-bucket: "{duration}-gennemsnit"
+  window-1h: 1t
+  window-6h: 6t
+  window-24h: 24t
+  window-7d: 7 d
+cloud-chat:
+  title: Spørg Dozzle
+  close: Luk
+  clear: Ryd chatten
+  empty: Spørg om det du kigger på. Assistenten kan se denne visning og læse disse logs.
+  thinking: Tænker…
+  doing:
+    logs: Læser logs…
+    containers: Kigger på containere…
+    stats: Tjekker ressourceforbrug…
+    inspect: Inspicerer containeren…
+    notifications: Tjekker notifikationer…
+    action: Kører handlingen…
+    working: Arbejder…
+  placeholder: Spørg om disse logs
+  historical: historisk
+  n-containers: "{n} containere"
+  evidence: Sendes med dit spørgsmål
+  lines-in-view: "{n} linjer i visning"
+  this-log: Denne loglinje
+  remove-log: Fjern denne loglinje
+  send: Send
+  suggest-summarize: Opsummer hvad der sker
+  suggest-errors: Find fejl og advarsler
+  suggest-next: Hvad skal jeg kigge på nu?
+  error-unavailable: Assistenten er ikke tilgængelig lige nu.
+  error-not-configured: Dozzle Cloud er ikke tilknyttet, så der er ingen assistent at spørge.
+  section-ask: Assistent
+  ask-for: Spørg Dozzle om {query}
+  ask-hint: Svarer ud fra containerne i visningen
+  ask-shortcut: for at spørge
 cloud-search:
   containers-section: "Containere"
+  section-logs: "Logs"
+  no-matches: "Ingen containere eller kommandoer matcher"
+  nav-hint: "naviger"
+  pin-shortcut: "fastgør kolonne"
   search-logs-for: 'Søg logs efter "{query}"'
   across-containers: "indekseret på tværs af alle dine containere"
   connect-to-enable: "Tilslut Dozzle Cloud for at søge i logs"
@@ -591,6 +723,8 @@ cloud-search:
   container-removed-pill: "slettet"
 command-palette:
   section-commands: Kommandoer
+  section-recent: "Seneste"
+  run-hint: "kør kommando"
   restart-container: Genstart {name}
   stop-container: Stop {name}
   start-container: Start {name}

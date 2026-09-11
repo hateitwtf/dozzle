@@ -6,22 +6,28 @@
         <SidePanel />
       </Pane>
       <Pane min-size="10" :size="navVisible ? 100 - menuWidth : 100">
-        <Splitpanes>
-          <Pane class="router-view min-h-screen">
-            <router-view></router-view>
-          </Pane>
-          <template v-if="!isMobile">
-            <Pane v-for="other in pinnedLogs" :key="other.id">
-              <ContainerLog
-                :id="other.id"
-                show-title
-                scrollable
-                closable
-                @close="pinnedLogsStore.unPinContainer(other)"
-              />
+        <!-- The rail is fixed to the right edge, so its width is reserved here
+             rather than over the logs. Reserved inside the content column and
+             not on the page, because the nav is a different column: narrowing
+             it when a panel opens reads as the menu having done something. -->
+        <div :style="{ paddingRight: `${railOffset}px` }">
+          <Splitpanes>
+            <Pane class="router-view min-h-screen">
+              <router-view></router-view>
             </Pane>
-          </template>
-        </Splitpanes>
+            <template v-if="!isMobile">
+              <Pane v-for="other in pinnedLogs" :key="other.id">
+                <ContainerLog
+                  :id="other.id"
+                  show-title
+                  scrollable
+                  closable
+                  @close="pinnedLogsStore.unPinContainer(other)"
+                />
+              </Pane>
+            </template>
+          </Splitpanes>
+        </div>
       </Pane>
     </Splitpanes>
     <label
@@ -34,6 +40,8 @@
       <mdi:chevron-left class="swap-off" />
     </label>
   </div>
+  <CloudRail v-if="railMounted" />
+  <CloudRailHandle v-else-if="railCollapsed" />
   <dialog ref="modal" class="modal bg-base-300/50! items-start backdrop-blur-md transition-none!" @close="closeSearch">
     <div class="modal-box max-w-2xl overflow-visible! bg-transparent pt-20 shadow-none">
       <FuzzySearchModal @close="closeSearch" v-if="open" />
@@ -54,8 +62,9 @@
 <script lang="ts" setup>
 import { Splitpanes, Pane } from "splitpanes";
 import { collapseNav } from "@/stores/settings";
-import SideDrawer from "@/components/common/SideDrawer.vue";
+import SideDrawer from "@/components/shell/SideDrawer.vue";
 
+usePinnedColumnsInUrl();
 const pinnedLogsStore = usePinnedLogsStore();
 const { pinnedLogs } = storeToRefs(pinnedLogsStore);
 
@@ -67,10 +76,12 @@ const {
   closeGuard: drawerCloseGuard,
 } = createDrawer(drawer);
 
-import { useFuzzySearch } from "@/composable/fuzzySearch";
+import { useFuzzySearch } from "@/composable/app/fuzzySearch";
 
 // Pulls fuse.js (~48 KB) with it, and the palette only renders once the user opens it.
-const FuzzySearchModal = defineAsyncComponent(() => import("@/components/FuzzySearchModal.vue"));
+const FuzzySearchModal = defineAsyncComponent(() => import("@/components/search/FuzzySearchModal.vue"));
+
+const { railOffset, mounted: railMounted, collapsed: railCollapsed, toggleRail } = useCloudRail();
 
 const modal = ref<HTMLDialogElement>();
 const { open, openSearch: showFuzzySearch, closeSearch } = useFuzzySearch();
@@ -96,6 +107,15 @@ watch(open, () => {
 onKeyStroke("k", (e) => {
   if ((e.ctrlKey || e.metaKey) && !e.shiftKey) {
     showFuzzySearch();
+    e.preventDefault();
+  }
+});
+
+// Shift is the assistant; the palette keeps the bare chord. Registered on the
+// layout rather than the toolbar so it works on every view it can talk about.
+onKeyStroke(["k", "K"], (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
+    toggleRail("chat");
     e.preventDefault();
   }
 });

@@ -55,7 +55,16 @@ func main() {
 		os.Exit(0)
 	}
 
-	if args.AuthProvider != "none" && args.AuthProvider != "forward-proxy" && args.AuthProvider != "simple" {
+	// "github" and "google" are aliases for simple auth. OAuth is a second way to
+	// prove you are one of the users in users.yml, not a provider of its own, but
+	// they are the first thing someone reaches for, and hitting a fatal there is a
+	// bad first five minutes.
+	switch args.AuthProvider {
+	case "github", "google":
+		log.Debug().Str("alias", args.AuthProvider).Msg("Auth provider is an alias for simple")
+		args.AuthProvider = "simple"
+	case "none", "forward-proxy", "simple":
+	default:
 		log.Fatal().Str("provider", args.AuthProvider).Msg("Invalid auth provider")
 	}
 
@@ -154,7 +163,7 @@ func main() {
 	cloudClient := cloud.NewClient(apiKeyFunc, instanceID, args.Version(), cloud.ToolDeps{
 		EnableActions:       args.EnableActions,
 		HostService:         cloudHostService,
-		Labels:              args.Filter,
+		Principal:           cloud.APIKeyPrincipal(args.Filter),
 		NotificationService: notificationService,
 	})
 	cloudClient.SetDeployment(args.Mode, swarmClusterID)
@@ -179,6 +188,17 @@ func main() {
 		OnUpdate:   cloudClient.Reconnect,
 		SearchLogs: cloudClient.SearchLogs,
 		GetAlerts:  cloudClient.GetAlerts,
+
+		GetRecentAlerts: cloudClient.GetRecentAlerts,
+
+		GetContainerMetrics: cloudClient.GetContainerMetrics,
+
+		Chat: func(ctx context.Context, message string, view cloud.ViewContext, userRef string, principal cloud.Principal, emit func(cloud.ChatEvent)) error {
+			// C10: credentials come from a resolver rather than the stored key.
+			// It always answers with the instance key today. When a user can
+			// attach a personal key, this is the only line that changes.
+			return cloudClient.Chat(ctx, message, view, userRef, principal, apiKeyFunc, emit)
+		},
 	})
 
 	go func() {
@@ -197,6 +217,35 @@ func main() {
 		log.Error().Err(err).Msg("failed to shut down")
 	}
 	log.Debug().Msg("shut down complete")
+}
+
+// oauthProviders builds the external identity providers simple auth accepts.
+// users.yml stays the allowlist either way: a provider configured here only adds
+// a way to prove you are a user it already lists.
+func oauthProviders(args cli.Args) []auth.IdentityProvider {
+	var providers []auth.IdentityProvider
+
+	id, secret := args.AuthGithubClientID, args.AuthGithubClientSecret
+	switch {
+	case id != "" && secret != "":
+		log.Debug().Msg("Enabling Sign in with GitHub")
+		providers = append(providers, auth.NewGithubProvider(id, secret))
+	case id != "" || secret != "":
+		// Half-configured silently means no button at all, which reads as Dozzle
+		// ignoring the setting.
+		log.Warn().Msg("Both --auth-github-client-id and --auth-github-client-secret are required for Sign in with GitHub; ignoring GitHub configuration")
+	}
+
+	issuer, oidcID, oidcSecret := args.AuthOidcIssuer, args.AuthOidcClientID, args.AuthOidcClientSecret
+	switch {
+	case issuer != "" && oidcID != "" && oidcSecret != "":
+		log.Debug().Str("issuer", issuer).Msg("Enabling OpenID Connect sign in")
+		providers = append(providers, auth.NewOIDCProvider(issuer, oidcID, oidcSecret, args.AuthOidcName))
+	case issuer != "" || oidcID != "" || oidcSecret != "":
+		log.Warn().Msg("--auth-oidc-issuer, --auth-oidc-client-id and --auth-oidc-client-secret are all required for OpenID Connect; ignoring OIDC configuration")
+	}
+
+	return providers
 }
 
 func fileExists(filename string) bool {
@@ -254,7 +303,15 @@ func createServer(args cli.Args, hostService web.HostService, cloudHooks web.Clo
 				log.Fatal().Err(err).Msg("Could not parse auth ttl")
 			}
 		}
-		authorizer = auth.NewSimpleAuth(db, ttl)
+		// Sits next to users.yml so it lands on the same volume operators already
+		// persist, and so a multi-replica setup sharing that volume signs with the
+		// same key.
+		simpleAuth := auth.NewSimpleAuth(db, ttl, auth.SessionSecret(filepath.Dir(userFilePath)))
+		authorizer = simpleAuth
+
+		if providers := oauthProviders(args); len(providers) > 0 {
+			authorizer = auth.NewOAuthAuth(simpleAuth, args.Base, providers...)
+		}
 	}
 
 	authTTL := time.Duration(0)

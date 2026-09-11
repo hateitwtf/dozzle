@@ -28,16 +28,42 @@ toolbar:
   attach: Attacher
   copy-permalink: Copier le lien permanent
   copy-image: "Copier le tag de l'image"
+  pin: "Épingler"
+  unpin: "Détacher"
   copy-logs: Copier les journaux
   copy-filtered-logs: Copier les journaux filtrés
   copying-logs: Copie des journaux...
+  streams: Flux
+  levels: Niveaux
+  toggle-all-levels: Basculer tous les niveaux
+  all: Tous
+  none: Aucun
+  section-logs: Journaux
+  section-filters: Filtres
+  section-display: Affichage
+  section-export: Exporter
+  section-container: Conteneur
+  section-image: Image
 action:
   copy-log: Copier le journal
   copy-link: Copier le permalien
   see-in-context: Voir dans le contexte
   show-details: Afficher les détails
   create-alert: Créer une alerte
+  ask-about-log: Poser une question sur ce log
+log-details:
+  on-std: sur {std}
+  image: Image
+  raw-json: JSON brut
+  copy: Copier
+  download: Télécharger le JSON
+  fields: Champs
+  field: Champ
+  value: Valeur
+  fields-hint: Faites glisser pour réordonner. Activez ou désactivez pour les afficher ou les masquer dans le flux de logs.
+  toggle-all: Basculer tous les champs
 label:
+  historical-at: "Logs historiques · {time}"
   containers: Conteneurs
   container: Pas de conteneur | 1 conteneur | {count} conteneurs
   alert-events: Aucun événement | 1 événement | {count} événements
@@ -62,13 +88,15 @@ label:
   hosts: Hôtes
   password: Mot de passe
   username: Nom d'utilisateur
+  or: ou
   container-name: Nom du conteneur
   status: Status
   created: Créé
-  avg-cpu: Moyenne CPU (%)
-  avg-mem: Moyenne MEM (%)
+  avg-cpu: Moyenne CPU
+  avg-mem: Moyenne mémoire
   name: Nom
   cpu: CPU
+  core: Aucun cœur | 1 cœur | {count} cœurs
   mem: MEM
   pinned: Epinglé
   per-page: Colonnes par page
@@ -79,19 +107,28 @@ label:
   k8s-menu: Kubernetes
   group-menu: Groupes Personnalisés
   no-logs: Le conteneur n'a pas encore de logs
+  no-logs-hint: "Tout ce que le conteneur écrit apparaîtra ici immédiatement."
   search-status:
     searching: Recherche dans les logs plus anciens…
     searching-to: Recherche dans les logs plus anciens… jusqu'à {time}
     capped: "{count} résultats · recherché jusqu'à {time}"
     exhausted: Tous les logs recherchés · {count} résultats
-    empty: Aucun résultat · tous les logs recherchés
+    empty: "Aucun log correspondant"
+    empty-hint: "Tous les logs ont été recherchés. Essayez un autre terme ou effacez la recherche."
   show-all-containers: Afficher tous les conteneurs
   collapse-all: Réduire tout
   collapse-group: Réduire le groupe
   expand-all: Développer tout
+  more-options: Plus d'options
+  groups: Groupes
 tooltip:
+  live-logs: Ces logs sont figés à cet instant. Cliquez pour suivre le flux en direct.
   search: Recherche de conteneurs (⌘ + k, ⌃k)
   pin-column: Epinglé en colonne
+  unpin-column: Détacher la colonne
+  merge-stream: Fusionner dans le flux
+  merge-stream-hint: Ouvrez un conteneur pour fusionner avec lui
+  unmerge-stream: Retirer du flux
   merge-all: Fusionner tout dans un flux
   network-io: "Réseau : ↑ {tx}/s · ↓ {rx}/s"
   disk-io: "Disque : ↑ {write}/s · ↓ {read}/s"
@@ -117,6 +154,7 @@ error:
   page-not-found: Cette page n'existe pas
   host-group-not-found: "Aucun hôte trouvé dans le groupe « {name} »"
   invalid-auth: Nom d'utilisateur ou mot de passe non valides
+  oauth-failed: Échec de la connexion. Veuillez réessayer.
   copy-not-supported: La copie dans le presse-papiers n'est pas prise en charge par votre navigateur
   copy-not-supported-hint: Presse-papiers indisponible. Copiez le lien ci-dessous
   logs-skipped: Afficher {total} entrées cachées
@@ -160,8 +198,10 @@ title:
   settings: Paramètres
   notifications: Notifications
 button:
+  live-logs: Aller aux logs en direct
   logout: Déconnexion
   login: Connexion
+  login-with: Continuer avec {provider}
   settings: Paramètres
   cancel: Annuler
   redirect: Rediriger
@@ -277,16 +317,48 @@ analytics:
   export: Exporter
   export_csv: Télécharger le CSV
   export_json: Télécharger le JSON
+  query: Requête
+  run: Exécuter
+  results: Résultats
 drawer:
   maximize: Agrandir
   restore: Restaurer
+terminal:
+  connecting: Connexion
+  connected: Connecté
+  closed: Déconnecté
+  connection-closed: Connexion fermée
+  not-running: Le conteneur n'est pas en cours d'exécution
+  reconnect: Reconnecter
+  attaching: Connexion à {name}
+  decrease-font: Réduire la taille de la police
+  increase-font: Augmenter la taille de la police
+  search: Rechercher
+  no-results: Aucun résultat
+  previous-match: Correspondance précédente
+  next-match: Correspondance suivante
+  close-search: Fermer la recherche
 notifications:
+  history:
+    title: Activité
+    loading: Chargement de l'activité…
+    failed: Impossible de charger l'activité.
+    empty-unlinked: Les alertes apparaissent ici dès que cette instance est liée à Dozzle Cloud. En attendant, elles passent dans le flux de logs et sont oubliées au rechargement.
+    empty: Rien ne s'est déclenché récemment.
+    still-happening: toujours en cours
+    events: "{n} événements"
+    suppressed: "· {n} supprimés"
+    show-lines: Montre-moi les lignes
+    show-moment: Voir les logs autour
+    open-in-cloud: Ouvrir dans Dozzle Cloud
+    fired-recently: fois récemment
   title: Notifications
   description: Configurez où et quand recevoir des alertes
   destinations: Destinations
   add-destination: Ajouter une destination
   alerts: Alertes
   add-alert: Ajouter une alerte
+  new-alerts: Nouvelles alertes
   prefill-name: Alertes d'erreur
   prefill-expression: level == "error"
   add: Ajouter
@@ -466,13 +538,10 @@ notifications:
     cloud-exists: Dozzle Cloud est déjà lié
     link-cloud: Lier le Compte
     link-cloud-button: Lier Dozzle Cloud
-    cloud-settings-hint: Pour configurer vos canaux gérés, allez à
     cloud-settings-link: Paramètres Dozzle Cloud
     cloud-checking: Vérification du statut cloud...
     cloud-relink: Votre clé API est invalide ou expirée. Veuillez supprimer et relier votre compte.
     cloud-unavailable: Dozzle Cloud est temporairement indisponible. Veuillez réessayer plus tard.
-    cloud-plan: Plan
-    cloud-usage: Événements pour cette période
   empty-state:
     title: Commencer avec les notifications
     description: Choisissez comment vous souhaitez recevoir des alertes lorsque vos conteneurs nécessitent une attention.
@@ -484,13 +553,20 @@ notifications:
 cloud:
   title: Dozzle Cloud
   description: Contrôlez vos conteneurs à distance et utilisez l'IA pour examiner les problèmes dans votre cluster.
+  pitch:
+    findings: Analyse quotidienne par IA de vos erreurs et avertissements
+    alerts: Alertes en temps réel pour les pannes et les seuils
+    control: Démarrez, arrêtez et inspectez vos conteneurs où que vous soyez
   learn-more: En savoir plus
   link-instance: Lier l'instance
   relink-instance: Relier l'instance
   connected: Connecté
   pro-badge: Dozzle Cloud Pro
+  locked-on-this-plan: Disponible avec Dozzle Cloud Pro
   plan: Plan
-  usage: Événements pour cette période
+  usage: Événements
+  usage-agent-messages: Discussions avec l'agent
+  usage-log-bytes: Données indexées
   dashboard: Tableau de bord
   settings: Paramètres
   error: Erreur de connexion. Veuillez relier votre instance.
@@ -498,6 +574,7 @@ cloud:
   unlink: Délier
   unlink-confirm: Êtes-vous sûr de vouloir délier de Dozzle Cloud ? Cela supprimera toutes les destinations de notification cloud.
   privacy:
+    details-link: "Ce qui est envoyé"
     toggle: "Diffuser les journaux et les métriques vers Dozzle Cloud"
     sends-heading: "Tant que cette option est activée, vos conteneurs envoient en continu :"
     sends-logs: "Les lignes de journal, au fur et à mesure de leur écriture"
@@ -505,7 +582,7 @@ cloud:
     never-heading: "Jamais envoyé :"
     never-env: "Les variables d'environnement"
     off-note: "Désactivez pour conserver les journaux et les métriques sur cette instance. Les alertes que vous avez configurées continuent d'être envoyées et l'accès distant aux conteneurs fonctionne toujours."
-    per-container: "Exclure un seul conteneur avec le label : dev.dozzle.cloud.min_level=disabled"
+    per-container: "Arrêter les journaux d'un seul conteneur avec le label : dev.dozzle.cloud.min_level=disabled"
     required-for: "Requis pour les investigations par IA, la recherche dans les journaux et l'historique des ressources."
   welcome:
     watching-title: "Cloud surveille vos logs pour que vous n'ayez pas à le faire"
@@ -561,8 +638,63 @@ cloud:
       disk-free: "Volume avec moins de 1 Go libre"
       fatal: "Toute ligne fatal"
       error: "Toute ligne error"
+cloud-rail:
+  title: Dozzle Cloud
+  chat: Demander à Dozzle
+  metrics: Métriques
+  alerts: Alertes
+  close: Fermer
+  hide: Masquer la barre cloud
+  show: Afficher la barre cloud
+  alerts-empty-here: Rien ne s'est déclenché sur ce que vous regardez.
+  all-activity: Toute l'activité
+  metrics-no-container: Ouvrez un conteneur pour voir son historique.
+  metrics-loading: Chargement de l'historique…
+  metrics-failed: Impossible de charger l'historique.
+  metrics-empty: Rien d'enregistré pour cette période.
+  metrics-peak: pic
+  metrics-bucket: moyennes sur {duration}
+  window-1h: 1 h
+  window-6h: 6 h
+  window-24h: 24 h
+  window-7d: 7 j
+cloud-chat:
+  title: Demander à Dozzle
+  close: Fermer
+  clear: Effacer la conversation
+  empty: Posez une question sur ce que vous regardez. L'assistant voit cette vue et lit ces logs.
+  thinking: Réflexion…
+  doing:
+    logs: Lecture des logs…
+    containers: Examen des conteneurs…
+    stats: Vérification des ressources…
+    inspect: Inspection du conteneur…
+    notifications: Vérification des notifications…
+    action: Exécution de l'action…
+    working: En cours…
+  placeholder: Poser une question sur ces logs
+  historical: historique
+  n-containers: "{n} conteneurs"
+  evidence: Envoyé avec votre question
+  lines-in-view: "{n} lignes visibles"
+  this-log: Cette ligne de log
+  remove-log: Retirer cette ligne de log
+  send: Envoyer
+  suggest-summarize: Résume ce qui se passe
+  suggest-errors: Trouve les erreurs et avertissements
+  suggest-next: Que dois-je regarder ensuite ?
+  error-unavailable: L'assistant n'est pas disponible pour le moment.
+  error-not-configured: Dozzle Cloud n'est pas lié, il n'y a donc aucun assistant à interroger.
+  section-ask: Assistant
+  ask-for: Demander à Dozzle à propos de {query}
+  ask-hint: Répond à partir des conteneurs affichés
+  ask-shortcut: pour demander
 cloud-search:
   containers-section: "Conteneurs"
+  section-logs: "Logs"
+  no-matches: "Aucun conteneur ou commande ne correspond"
+  nav-hint: "naviguer"
+  pin-shortcut: "épingler en colonne"
   search-logs-for: 'Rechercher des logs pour "{query}"'
   across-containers: "indexés sur tous vos conteneurs"
   connect-to-enable: "Connecter Dozzle Cloud pour rechercher des logs"
@@ -591,6 +723,8 @@ cloud-search:
   container-removed-pill: "supprimé"
 command-palette:
   section-commands: Commandes
+  section-recent: "Récents"
+  run-hint: "exécuter la commande"
   restart-container: Redémarrer {name}
   stop-container: Arrêter {name}
   start-container: Démarrer {name}

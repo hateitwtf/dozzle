@@ -196,20 +196,19 @@ The frontend uses file-based routing with these conventions:
   - `stack/[name].vue`: Docker stack logs
   - `group/[name].vue`: Custom grouped logs
 
-- **`assets/components/`** - Vue components (auto-imported)
-  - `LogViewer/`: Core log viewing components
-    - `SimpleLogItem.vue`: Single-line log entries
-    - `ComplexLogItem.vue`: JSON/structured log entries
-    - `GroupedLogItem.vue`: Multi-line grouped log entries
-    - `ContainerEventLogItem.vue`: Container lifecycle events
-    - `SkippedEntriesLogItem.vue`: Placeholder for skipped logs
-    - `LoadMoreLogItem.vue`: Load more historical logs
-  - `ContainerViewer/`: Container-specific UI
-  - `common/`: Reusable UI components
-  - `BarChart.vue`: Lightweight bar chart with automatic downsampling
-  - `HostCard.vue`: Host overview card with metrics
-  - `MetricCard.vue`: Reusable metric display component
-  - `ContainerTable.vue`: Container table with historical stat visualization
+- **`assets/components/`** - Vue components (auto-imported). See "Where files go" below.
+  - `ui/`: generic primitives (`BarChart.vue`, `MetricCard.vue`, `Popover.vue`, `UsageMeter.vue`, ...)
+  - `shell/`: app frame and the singletons `layouts/default.vue` mounts once
+  - `nav/`: everything inside the sidebar
+  - `search/`: the command palette and search surfaces
+  - `containers/`: `ContainerTable.vue`, the toolbar, the terminal
+  - `hosts/`: `HostCard.vue` and friends
+  - `logs/`: the stream, with `logs/entries/` holding one file per `LogEntry` type
+    (`SimpleLogItem.vue`, `ComplexLogItem.vue`, `GroupedLogItem.vue`,
+    `ContainerEventLogItem.vue`, `SkippedEntriesLogItem.vue`, `LoadMoreLogItem.vue`)
+  - `views/`: one file per route that renders a log view, mounted by `assets/pages/`
+  - `notifications/`: the rules the user wrote
+  - `cloud/`: memory, cross-instance and account, split into `rail/`, `chat/`, `history/`
 
 - **`assets/stores/`** - Pinia stores (auto-imported)
   - `config.ts`: App configuration and feature flags (injected from backend HTML, frozen immutable)
@@ -220,15 +219,19 @@ The frontend uses file-based routing with these conventions:
   - `swarm.ts`, `k8s.ts`: Deployment mode-specific state
   - `announcements.ts`: Feature announcements
 
-- **`assets/composable/`** - Vue composables (auto-imported)
-  - `eventStreams.ts`: SSE connection management with buffer-based flushing (250ms debounce)
-  - `historicalLogs.ts`: Historical log fetching
-  - `logContext.ts`: Log filtering and search context (provide/inject pattern)
-  - `scrollContext.ts`: Scroll state management (paused, progress, currentDate)
-  - `storage.ts`: LocalStorage abstractions with reactivity
-  - `visible.ts`: Log filtering by visible keys for complex logs
-  - `containerActions.ts`: Container control operations
-  - `duckdb.ts`: DuckDB WASM for SQL queries on logs
+- **`assets/composable/`** - Vue composables (auto-imported), foldered to mirror the components
+  - `ui/`: `popover.ts`, `media.ts`, `timeTicker.ts` - no domain knowledge
+  - `app/`: shell and global session state (`drawer.ts`, `theme.ts`, `toast.ts`, ...)
+  - `logs/`: the stream pipeline (`eventStreams.ts` SSE with 250ms buffered flushing,
+    `historicalLogs.ts`, `logContext.ts` provide/inject, `scrollContext.ts`,
+    `visible.ts`, `duckdb.ts` for SQL over logs)
+  - `containers/`: `containerActions.ts`, `imageUpdate.ts`, ...
+  - `cloud/`, `notifications/`, `editor/`
+
+  The `AutoImport` `dirs` glob is `assets/composable/**`. It must stay recursive: a bare
+  directory is scanned one level deep, and nested composables silently stop being
+  auto-imported with no error. The `**` also globs `*.spec.ts`, which is harmless only
+  while no spec exports anything.
 
 - **`assets/modules/`** - Vue plugins
   - `router.ts`: Vue Router configuration
@@ -249,6 +252,179 @@ The frontend uses file-based routing with these conventions:
 - **Backend**: Embeds `dist/` using Go embed directive
 - **Hot Reload**: In development, `DEV=true` disables embedded assets, `LIVE_FS=true` serves from filesystem
 - **Makefile**: Orchestrates builds and dependency generation
+
+## Dozzle and Dozzle Cloud
+
+Cloud features are folded into the Dozzle UI rather than linked to. The split that
+decides where a feature lands:
+
+> **Dozzle owns anything about the container in front of the user. Cloud owns
+> anything that is history, cross-instance, or account.**
+
+Dozzle is optimized for the current view and can act on it; Cloud reviews everything
+at once. When a feature could live in either, ask which of those two questions it
+answers.
+
+### Naming
+
+The two Cloud surfaces must not blur into each other:
+
+- **Notifications** — the rules the user wrote, and what those rules did.
+- **Findings** — the rules the user never wrote, that Cloud noticed anyway.
+
+Findings are not alerts and are never listed alongside them.
+
+### What Cloud adds is memory, not features
+
+Nothing Dozzle does locally today ever gets gated. Alerts already splice into the log
+stream (`AlertLogItem.vue`), they just die on refresh because nothing remembers them.
+Cloud's contribution is that the same thing survives a reload, a restart, and a week —
+which is why an alert can come back later as a dot on a container row.
+
+So a Cloud-less install shows an empty history section with one muted line saying what
+it would hold, not a locked card. A surface that has no local half at all (a findings
+list) is mounted only when cloud is configured, rather than existing as a permanent
+upsell page in the nav.
+
+### Linking out
+
+Linking out to Cloud is fine, and expected, for anything Cloud genuinely does better:
+billing and keys, the report archive, cross-instance rollups, deep-investigation
+transcripts. `AlertHit.url` in `protos/cloud.proto` already carries the deep link.
+
+Never link out for something Dozzle could answer against the stream already on screen.
+"Show me the lines" — driving the historical scroll to the window a finding or alert
+describes — is the whole reason these surfaces live in Dozzle at all.
+
+### Gating
+
+Plan decisions are computed server-side in Cloud and handed to Dozzle already decided
+(`fixLocked`), never inferred from missing data — absence read as tier is how a paying
+customer gets shown an upsell for what they already bought. Dozzle renders the gate it
+is given and branches on nothing beyond `isPro` for cosmetics.
+
+One upsell surface: `CloudPopover`. Everywhere else stays silent, per the design
+system's rule that `primary` is reserved for the single action a surface wants you to
+take — a findings drawer wants "Show me the lines", not "Upgrade".
+
+## Design System
+
+The UI is being converged on one visual language: clean, flat, and quiet. New or
+redesigned surfaces follow these rules; when touching an old surface, bring it along
+rather than matching what is already there.
+
+### Surfaces
+
+- A grouped surface is a **neutral panel**: `rounded-lg border border-base-content/15 bg-base-200/40`,
+  with rows separated by `divide-y divide-base-content/10`. Padding is `p-4` per row,
+  `p-2` for a row of link items. No shadows, no gradients, no `--depth`.
+- Floating surfaces (dropdowns, popovers, toasts) use `rounded-box border border-base-content/10 bg-base-200`
+  with `shadow-sm`/`shadow-lg`. `nav-menu-panel` in `main.css` is the sidebar's version.
+- Inside a panel, a hairline `<div class="bg-base-content/10 h-px">` separates blocks when
+  `divide-y` does not apply (e.g. inside a dropdown's flow).
+- Interactive rows are `hover:bg-base-300 rounded-md px-2 py-1.5 transition-colors`, with a
+  leading icon at `size-4 opacity-60` and a trailing `mdi:open-in-new size-3.5 opacity-40`
+  when the row leaves the app.
+
+### Color and severity
+
+- **Severity rides on the icon, never on the surface.** A tinted circle
+  (`bg-error/10 text-error`, `bg-warning/10 text-warning`, `bg-info/10 text-info`) plus a
+  status dot carries the state; the panel behind it stays neutral so the text keeps full
+  contrast. Do not use daisyUI `alert alert-error` / `alert-warning` / `alert-success`:
+  a saturated block at drawer or page width shouts over everything near it.
+- Use `InlineNotice` (`assets/components/ui/InlineNotice.vue`) for an in-page notice and
+  `ToastModal` for a floating one. Both are neutral panels with a tinted glyph.
+- Status text is a `status-pill` (see `main.css`): a bordered, uppercase, mono chip in
+  `neutral`, `success`, `primary`, `secondary`, `warning` or `error`. Prefer it to `badge`.
+- `primary` is reserved for the single action a surface wants you to take. Two solid
+  primary buttons in one panel is a bug; the secondary one is a plain `btn`, and a
+  destructive secondary is `btn text-error`, not `btn-error`.
+
+### Typography and density
+
+- Body `text-sm`, secondary copy `text-base-content/60`, footnotes `text-xs` at
+  `text-base-content/40`. Drawer and page titles are `text-2xl font-bold` with a
+  `text-base-content/60` subtitle underneath.
+- Section headings inside a form are `FormStepHeading` (numbered chip + uppercase label);
+  standalone section headings are `text-base-content/60 font-semibold tracking-wide uppercase`.
+- Numbers, keys, IDs, periods, and percentages are `font-mono`. Emphasize the meaningful
+  half and mute the rest (`font-semibold` used, `text-base-content/40` for `/ limit`).
+- A read-only value is text, not a disabled input. Label left, mono value right.
+
+### Meters and charts
+
+- Usage meters are `UsageMeter` (`assets/components/ui/UsageMeter.vue`): a
+  `bg-base-content/10 h-1.5 rounded-full` track with a `bg-primary` fill that turns
+  `bg-warning` past 70% and `bg-error` past 90%. Do not use daisyUI `<progress>` for these;
+  it is taller than the type around it and carries its own palette.
+- Charts stay custom and lightweight (`BarChart.vue`); no chart library.
+
+### Affordances
+
+- Tailwind v4's preflight sets `cursor: default` on buttons, so a control reads as
+  painted on unless something puts the pointer back. One base-layer rule in `main.css`
+  does that for `button`, `summary`, `select`, `[role="button"]`, `.btn` and
+  checkbox/radio labels, skipping disabled ones. Never add `cursor-pointer` to a new
+  button; if a clickable thing still shows an arrow, it is a `div` pretending to be a
+  button and the fix is to make it a `<button>`.
+- Anything clickable needs a hover state and a hit area a pointer can find. Under ~24px
+  the painted box is not the target: draw the hit area with an `::after` inset so
+  the layout around it does not move (`AlertDot.vue`).
+
+### Motion
+
+- Transitions are `transition-colors` on hover, `duration-500` on a meter's width, and
+  `200ms cubic-bezier(0.34, 1.56, 0.64, 1)` for the icon spring in `main.css`.
+- Icon-only buttons opt into the spring with `btn-circle`, `btn-square` or `icon-btn`; the
+  flavours (`icon-float`, `icon-spin`, `icon-wiggle`, `icon-ring`) are set on the glyph.
+- Every animation has a `prefers-reduced-motion` escape.
+
+### Consistency rules
+
+- A panel keeps its shape across states. Loading, error and healthy branches of the same
+  surface share the header, dividers and footer so nothing reshuffles when state changes.
+- The same concept looks the same everywhere. The cloud account panel is the same parts at
+  three widths: `CloudPopover.vue` (compact), `CloudSettingsCard.vue`, and
+  `notifications/CloudDestinationForm.vue`. When a fourth surface needs it, extract a
+  component instead of copying the classes.
+- Do not repeat the container's title inside its own content: a drawer header already names
+  the thing, so the panel below leads with what the header cannot say.
+- Drawer footers are sticky, opaque and full-bleed:
+  `bg-base-100 border-base-content/10 sticky bottom-0 z-10 -mx-4 mt-auto border-t px-4 py-4`.
+
+## Where files go
+
+Four tests for a new component, applied in order. The first that matches decides the
+folder, so a contributor never has to ask.
+
+1. **`ui/`** — it imports nothing under `@/` except `@/composable/ui/`, **and** its name
+   carries no Dozzle noun (container, host, log, alert, cloud, nav, swarm, k8s, stack,
+   service, chat, rail). `ui/` means "would still build pasted into a different Vue app".
+   It does not mean "shared" and it does not mean "small": a `ui/` component with one
+   consumer is fine, and a large domain component with six consumers still lives in its
+   feature folder. Genericity is the test, popularity is not.
+2. **`cloud/`** — the surface does not exist at all in a cloud-less install. Two carve-outs,
+   settled once: anything `assets/models/LogEntry.ts` registers is a log entry and stays in
+   `logs/entries/` with its siblings, `AlertLogItem.vue` included, because alerts splice
+   into the local stream. And a variant that plugs into a local form stays with that form,
+   which is why `CloudDestinationForm.vue` sits beside `WebhookDestinationForm.vue`.
+3. **`views/`** — a file in `assets/pages/` mounts it as that route's whole body. One file
+   per route. (`ContainerLog.vue` is also mounted by `layouts/default.vue` for pinned
+   columns; it is still that route's view.)
+4. Otherwise the **feature folder** named by the noun in the component's own name.
+
+`nav/` is everything inside the sidebar; `shell/` is the frame that positions it. Nest one
+level inside a feature folder only past ~15 files and only with an obvious sub-noun, never
+two. A spec moves with its subject. `assets/composable/` uses the same folder names and the
+same first two tests.
+
+`components/ui/` may depend on `composable/ui/` and third-party code, and nothing else.
+That is the one dependency edge worth enforcing in review.
+
+Moving a component is cheap: `unplugin-vue-components` runs without `directoryAsNamespace`,
+so a component's name is its filename and nesting is invisible to every template. It also
+means **two components may never share a basename**, at any depth.
 
 ## Important Development Notes
 
@@ -418,7 +594,7 @@ Implementation (DockerClient, K8sClient, AgentClient)
 ### Adding a New Log View Type
 
 1. Create route file in `assets/pages/` (e.g., `custom/[id].vue`)
-2. Create composable in `assets/composable/eventStreams.ts` (e.g., `useCustomStream()`)
+2. Create composable in `assets/composable/logs/eventStreams.ts` (e.g., `useCustomStream()`)
 3. Composable should:
    - Build API URL with appropriate filters
    - Create EventSource connection
@@ -445,7 +621,7 @@ Implementation (DockerClient, K8sClient, AgentClient)
 - `types.go`: Alert rule definitions (log pattern matching, thresholds)
 - `dispatcher/`: Notification channel implementations
 
-**Frontend** (`assets/pages/notifications.vue`, `assets/components/Notification/`):
+**Frontend** (`assets/pages/notifications.vue`, `assets/components/notifications/`):
 
 - `AlertForm.vue`, `DestinationForm.vue`: UI for creating rules
 - Rules persisted to `./data/notifications.yml` via `internal/notification/persist.go`
@@ -455,7 +631,7 @@ Implementation (DockerClient, K8sClient, AgentClient)
 
 1. Implement dispatcher interface in `internal/notification/dispatcher/`
 2. Register in `manager.go` dispatcher factory
-3. Add UI form in `assets/components/Notification/DestinationForm.vue`
+3. Add UI form in `assets/components/notifications/DestinationForm.vue`
 
 ### Adding a New Cloud Tool
 

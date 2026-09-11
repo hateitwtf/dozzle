@@ -28,16 +28,42 @@ toolbar:
   attach: 附加
   copy-permalink: 複製永久連結
   copy-image: "複製映像標籤"
+  pin: "置頂"
+  unpin: "取消置頂"
   copy-logs: 複製日誌
   copy-filtered-logs: 複製篩選日誌
   copying-logs: 正在複製日誌...
+  streams: 輸出串流
+  levels: 級別
+  toggle-all-levels: 切換所有級別
+  all: 全部
+  none: 無
+  section-logs: 日誌
+  section-filters: 篩選
+  section-display: 顯示
+  section-export: 匯出
+  section-container: 容器
+  section-image: 映像
 action:
   copy-log: 複製日誌
   copy-link: 複製永久連結
   see-in-context: 在內容中查看
   show-details: 顯示詳細資訊
   create-alert: 建立警報
+  ask-about-log: 詢問這則日誌
+log-details:
+  on-std: 來自 {std}
+  image: 映像檔
+  raw-json: 原始 JSON
+  copy: 複製
+  download: 下載 JSON
+  fields: 欄位
+  field: 欄位
+  value: 值
+  fields-hint: 拖曳可重新排序。切換可在日誌串流中顯示或隱藏。
+  toggle-all: 切換所有欄位
 label:
+  historical-at: "歷史日誌 · {time}"
   containers: 容器
   container: 無容器 | 1 個容器 | {count} 個容器
   alert-events: 無事件 | 1 個事件 | {count} 個事件
@@ -59,27 +85,33 @@ label:
   namespaces: 命名空間
   owners: 所屬工作負載
   no-logs: 容器尚無日誌
+  no-logs-hint: "容器輸出的內容會立即顯示在這裡。"
   search-status:
     searching: 正在搜尋較舊的日誌…
     searching-to: 正在搜尋較舊的日誌…回溯至 {time}
     capped: "{count} 筆符合 · 已搜尋至 {time}"
     exhausted: 已搜尋所有日誌 · {count} 筆符合
-    empty: 無符合項目 · 已搜尋所有日誌
+    empty: "沒有符合的日誌"
+    empty-hint: "已搜尋所有日誌。請試試其他關鍵字或清除搜尋。"
   show-all-containers: 顯示所有容器
   collapse-all: 摺疊全部
   collapse-group: 摺疊群組
   expand-all: 展開全部
+  more-options: 更多選項
+  groups: 群組
   host: 主機
   hosts: 主機
   password: 密碼
   username: 使用者名稱
+  or: 或
   container-name: 容器名稱
   status: 狀態
   created: 建立時間
-  avg-cpu: 平均 CPU 使用率 (%)
-  avg-mem: 平均記憶體使用率 (%)
+  avg-cpu: 平均 CPU
+  avg-mem: 平均記憶體
   name: 名稱
   cpu: CPU
+  core: 無核心 | 1 個核心 | {count} 個核心
   mem: MEM
   pinned: 已釘選
   per-page: 每頁列數
@@ -90,8 +122,13 @@ label:
   k8s-menu: Kubernetes
   group-menu: 自訂群組
 tooltip:
+  live-logs: 這些日誌已凍結在該時間點。點擊以查看即時日誌串流。
   search: 搜尋容器 (⌘ + k, ⌃k)
   pin-column: 釘選為欄位
+  unpin-column: 取消釘選欄位
+  merge-stream: 合併到串流
+  merge-stream-hint: 開啟一個容器以進行合併
+  unmerge-stream: 從串流移除
   merge-all: 將所有內容合併到一個流中
   network-io: "網路：↑ {tx}/s · ↓ {rx}/s"
   disk-io: "磁碟：↑ {write}/s · ↓ {read}/s"
@@ -117,6 +154,7 @@ error:
   page-not-found: 此頁面不存在
   host-group-not-found: "在群組「{name}」中找不到主機"
   invalid-auth: 使用者名稱或密碼不正確
+  oauth-failed: 登入失敗，請再試一次。
   copy-not-supported: 您的瀏覽器不支援複製到剪貼簿
   copy-not-supported-hint: 剪貼簿不可用。請複製下方連結
   logs-skipped: 顯示 {total} 個隱藏項目
@@ -162,8 +200,10 @@ title:
   settings: 設定
   notifications: 通知
 button:
+  live-logs: 前往即時日誌
   logout: 登出
   login: 登入
+  login-with: 使用 {provider} 繼續
   settings: 設定
   cancel: 取消
   redirect: 重新導向
@@ -280,16 +320,48 @@ analytics:
   export: 匯出
   export_csv: 下載 CSV
   export_json: 下載 JSON
+  query: 查詢
+  run: 執行
+  results: 結果
 drawer:
   maximize: 最大化
   restore: 還原
+terminal:
+  connecting: 連線中
+  connected: 已連線
+  closed: 已中斷
+  connection-closed: 連線已關閉
+  not-running: 容器未執行
+  reconnect: 重新連線
+  attaching: 正在連線到 {name}
+  decrease-font: 縮小字級
+  increase-font: 放大字級
+  search: 搜尋
+  no-results: 無結果
+  previous-match: 上一個相符項目
+  next-match: 下一個相符項目
+  close-search: 關閉搜尋
 notifications:
+  history:
+    title: 動態
+    loading: 正在載入動態…
+    failed: 無法載入動態。
+    empty-unlinked: 把這個實例連結到 Dozzle Cloud 之後，警報就會出現在這裡。在那之前它們只會從日誌串流裡閃過，重新載入就沒了。
+    empty: 最近沒有任何警報觸發。
+    still-happening: 仍在持續
+    events: "{n} 個事件"
+    suppressed: "· 已抑制 {n} 個"
+    show-lines: 查看對應日誌
+    show-moment: 查看前後日誌
+    open-in-cloud: 在 Dozzle Cloud 中開啟
+    fired-recently: 次（最近）
   title: 通知
   description: 設定接收警報的位置和時間
   destinations: 目標
   add-destination: 新增目標
   alerts: 警報
   add-alert: 新增警報
+  new-alerts: 有新警報
   prefill-name: 錯誤警報
   prefill-expression: level == "error"
   add: 新增
@@ -469,13 +541,10 @@ notifications:
     cloud-exists: Dozzle Cloud 已連結
     link-cloud: 連結帳戶
     link-cloud-button: 連結 Dozzle Cloud
-    cloud-settings-hint: 若要設定您的管理頻道，請前往
     cloud-settings-link: Dozzle Cloud 設定
     cloud-checking: 正在檢查雲端狀態...
     cloud-relink: 您的 API 金鑰無效或已過期。請刪除並重新關聯您的帳戶。
     cloud-unavailable: Dozzle Cloud 暫時無法使用，請稍後再試。
-    cloud-plan: 方案
-    cloud-usage: 本期事件數
   empty-state:
     title: 開始使用通知
     description: 選擇當您的容器需要關注時，您希望如何接收警報。
@@ -487,13 +556,20 @@ notifications:
 cloud:
   title: Dozzle Cloud
   description: 遠端控制您的容器，並使用 AI 調查叢集中的問題。
+  pitch:
+    findings: 每日 AI 掃描您的錯誤與警告
+    alerts: 當機與門檻的即時警報
+    control: 隨時隨地啟動、停止與檢查容器
   learn-more: 瞭解更多
   link-instance: 連結實例
   relink-instance: 重新連結實例
   connected: 已連線
   pro-badge: Dozzle Cloud Pro
+  locked-on-this-plan: Dozzle Cloud Pro 方案提供
   plan: 方案
-  usage: 本期事件數
+  usage: 事件
+  usage-agent-messages: 智慧代理對話
+  usage-log-bytes: 已索引資料
   dashboard: 儀表板
   settings: 設定
   error: 連線錯誤。請重新連結您的實例。
@@ -501,6 +577,7 @@ cloud:
   unlink: 取消連結
   unlink-confirm: 確定要取消與 Dozzle Cloud 的連結嗎？這將移除所有雲端通知目標。
   privacy:
+    details-link: "傳送了哪些內容"
     toggle: "將日誌與指標串流至 Dozzle Cloud"
     sends-heading: "啟用期間，您的容器會持續傳送："
     sends-logs: "日誌內容，於寫入時傳送"
@@ -508,7 +585,7 @@ cloud:
     never-heading: "永不傳送："
     never-env: "環境變數"
     off-note: "停用後，日誌與指標將保留在此執行個體上。已設定的警示仍會送達，遠端容器存取也仍可使用。"
-    per-container: "若要排除單一容器，請使用標籤：dev.dozzle.cloud.min_level=disabled"
+    per-container: "若要停止單一容器的日誌，請使用標籤：dev.dozzle.cloud.min_level=disabled"
     required-for: "AI 分析、日誌搜尋與資源歷史記錄所需。"
   welcome:
     watching-title: "Cloud 替你盯著日誌"
@@ -564,8 +641,63 @@ cloud:
       disk-free: "磁碟區剩餘空間不足 1 GB"
       fatal: "任何 fatal 行"
       error: "任何 error 行"
+cloud-rail:
+  title: Dozzle Cloud
+  chat: 詢問 Dozzle
+  metrics: 指標
+  alerts: 警報
+  close: 關閉
+  hide: 隱藏雲端側欄
+  show: 顯示雲端側欄
+  alerts-empty-here: 目前檢視的內容沒有觸發過警報。
+  all-activity: 全部活動
+  metrics-no-container: 開啟一個容器即可檢視歷史。
+  metrics-loading: 正在載入歷史…
+  metrics-failed: 無法載入歷史。
+  metrics-empty: 該時間範圍還沒有記錄。
+  metrics-peak: 峰值
+  metrics-bucket: "{duration} 平均值"
+  window-1h: 1 小時
+  window-6h: 6 小時
+  window-24h: 24 小時
+  window-7d: 7 天
+cloud-chat:
+  title: 問 Dozzle
+  close: 關閉
+  clear: 清除對話
+  empty: 就眼前看到的內容提問。助手能看到這個檢視，也能讀這些日誌。
+  thinking: 思考中…
+  doing:
+    logs: 正在讀取日誌…
+    containers: 正在查看容器…
+    stats: 正在檢查資源使用…
+    inspect: 正在檢查容器…
+    notifications: 正在檢查通知…
+    action: 正在執行操作…
+    working: 處理中…
+  placeholder: 就這些日誌提問
+  historical: 歷史
+  n-containers: "{n} 個容器"
+  evidence: 隨問題一起傳送
+  lines-in-view: 檢視中 {n} 行
+  this-log: 這則日誌
+  remove-log: 移除這則日誌
+  send: 傳送
+  suggest-summarize: 總結目前發生了什麼
+  suggest-errors: 找出錯誤與警告
+  suggest-next: 接下來我該看什麼？
+  error-unavailable: 助理目前無法使用。
+  error-not-configured: 尚未連結 Dozzle Cloud，沒有可以提問的助理。
+  section-ask: 助手
+  ask-for: 就 {query} 問 Dozzle
+  ask-hint: 根據檢視裡的容器作答
+  ask-shortcut: 提問
 cloud-search:
   containers-section: "容器"
+  section-logs: "日誌"
+  no-matches: "沒有符合的容器或指令"
+  nav-hint: "導覽"
+  pin-shortcut: "釘選為欄位"
   search-logs-for: '搜尋日誌 "{query}"'
   across-containers: "已在所有容器中建立索引"
   connect-to-enable: "連接 Dozzle Cloud 以搜尋日誌"
@@ -594,6 +726,8 @@ cloud-search:
   container-removed-pill: "已刪除"
 command-palette:
   section-commands: 命令
+  section-recent: "最近"
+  run-hint: "執行指令"
   restart-container: 重新啟動 {name}
   stop-container: 停止 {name}
   start-container: 啟動 {name}

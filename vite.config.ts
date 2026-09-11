@@ -15,7 +15,6 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig(() => ({
   base: "./",
   define: {
-    __CLOUD_URL__: JSON.stringify(process.env.CLOUD_URL || "https://cloud.dozzle.dev"),
     // No component uses the options API, so drop that half of the Vue runtime.
     __VUE_OPTIONS_API__: false,
   },
@@ -26,6 +25,14 @@ export default defineConfig(() => ({
       // the converter with escapeXML: false, so only encodeXML is reachable. See the shim.
       entities: path.resolve(import.meta.dirname, "assets/shims/entities.ts"),
     },
+  },
+  optimizeDeps: {
+    // The chat pane is loaded lazily, so vite's startup scan never sees
+    // markdown-it (and its five bare deps). It discovers them the first time
+    // someone opens the pane, re-optimizes mid-session, and the chunk that
+    // triggered it fails with "504 Outdated Optimize Dep". Naming it here means
+    // it is pre-bundled before anyone asks.
+    include: ["markdown-it"],
   },
   build: {
     manifest: true,
@@ -87,7 +94,9 @@ export default defineConfig(() => ({
         "@vueuse/core",
       ],
       dts: "assets/auto-imports.d.ts",
-      dirs: ["assets/composable", "assets/stores", "assets/utils/index.ts"],
+      // Recursive: composables live in feature subfolders. A bare dir is scanned
+      // one level deep only, which silently drops everything nested.
+      dirs: ["assets/composable/**", "assets/stores", "assets/utils/index.ts"],
       vueTemplate: true,
     }),
     VueI18nPlugin({

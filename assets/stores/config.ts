@@ -11,12 +11,16 @@ export interface Config {
   mode: "server" | "swarm" | "k8s";
   hosts: Host[];
   authProvider: "simple" | "none" | "forward-proxy";
+  oauthProviders?: { name: string; loginUrl: string; icon: string }[];
+  passwordLogin?: boolean;
   logoutUrl?: string;
   enableActions: boolean;
   enableShell: boolean;
   enableDownload: boolean;
   enableNotifications: boolean;
   enableCloud: boolean;
+  canLinkCloud: boolean;
+  cloudUrl: string;
   disableAvatars: boolean;
   releaseCheckMode: "automatic" | "manual";
   imageCheckMode: "automatic" | "manual" | "off";
@@ -38,6 +42,7 @@ export interface Profile {
   cloudWelcomeShown?: boolean;
   dismissedImageUpdates?: Set<string>;
   dismissedLinkHint?: boolean;
+  lastSeenAlertTs?: number;
 }
 
 const pageConfig = JSON.parse(text);
@@ -46,6 +51,9 @@ const config: Config = {
   maxLogs: 400,
   version: "v0.0.0",
   hosts: [],
+  // The login page ships a config without the authorized keys, and unit tests
+  // render components with no injected config at all.
+  cloudUrl: "https://cloud.dozzle.dev",
   ...pageConfig,
 };
 
